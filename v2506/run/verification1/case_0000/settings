@@ -1,3 +1,9 @@
+R 250e-6;
+epsilon 5.2e-5;
+zeta 250;
+theta 0.24;
+Da 30000;
+Bi 500;
 
 n_R         250;            // Number of cells in radial direction
 n_z         250;            // Number of cells in axial direction

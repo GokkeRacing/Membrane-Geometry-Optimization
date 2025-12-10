@@ -8,40 +8,40 @@
 FoamFile
 {
     format      ascii;
-    class       volScalarField;
-    location    "0";
-    object      T;
+    class       dictionary;
+    object      fvSchemes;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 0 0 1 0 0 0]; // [temperature]
-
-internalField   uniform 298;
-
-boundaryField
+ddtSchemes
 {
-    surface
-    {
-        type            fixedValue;
-        value           $internalField;
-    }
-    inlet
-    {
-        type            fixedValue;
-        value           $internalField;
-    }
-    outlet
-    {
-        type            inletOutlet;
-        inletValue      $internalField;
-        value           $internalField;
-    }
-    "wedge.*"
-    {
-        type            wedge;
-    }
-
+    default             steadyState;
 }
 
+gradSchemes
+{
+     default            Gauss linear;
+}
+
+divSchemes
+{
+    default             bounded Gauss linearUpwind grad(U);
+    div((nuEff*dev2(T(grad(U))))) Gauss linear;
+}
+
+laplacianSchemes
+{
+    default             Gauss linear corrected;
+}
+
+interpolationSchemes
+{
+    default             linear;
+}
+
+snGradSchemes
+{
+    default             corrected;
+}
 
 // ************************************************************************* //

@@ -1,0 +1,224 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  dev
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "../settings"
+
+application         simpleFoam;
+startFrom           latestTime;
+startTime           0;
+stopAt              endTime;
+endTime             400;
+deltaT              1;
+writeControl        timeStep;
+writeInterval       10;
+purgeWrite          0;
+writeFormat         ascii;
+writePrecision      12;
+writeCompression    off;
+timeFormat          general;
+timePrecision       12;
+runTimeModifiable   yes;
+
+functions
+{
+    writeCellVolumes
+    {
+        type            writeCellVolumes;
+        libs            (fieldFunctionObjects);
+        writeControl    writeTime;
+    }
+
+    writeCellCentres
+    {
+        type            writeCellCentres;
+        libs            (fieldFunctionObjects);
+        writeControl    writeTime;
+    }
+
+    // initParabolicU
+    // {
+    //     type coded;
+    //     name initParabolicU;
+    //     libs ( utilityFunctionObjects );
+
+    //     codeCorrect
+    //     #{
+    //         const volVectorField& C = mesh.C();    
+    //         volVectorField& U = const_cast<volVectorField&>(mesh.lookupObject<volVectorField>("U"));
+
+    //         scalar Uavg = 3.84e-05; // your average velocity
+    //         scalar R = 250e-6;      // pipe radius
+
+    //         forAll(U, i)
+    //         {
+    //             const vector& c = C[i];
+    //             scalar r = sqrt(pow(c.y(),2) + pow(c.z(),2));  // if pipe axis is y
+    //             scalar Uy = 2.0*Uavg*(1.0 - (r*r)/(R*R));
+
+    //             U[i] = vector(0, Uy, 0); // velocity along y
+    //         }
+
+    //         U.correctBoundaryConditions();
+    //     #};
+    // }
+
+    D_CO2
+    {
+        type            exprField;
+        libs            (fieldFunctionObjects);
+        field           D_CO2;
+        fieldType       volTensorField;
+        writeControl    writeTime;
+        #include        "../settings"
+        expression      "tensor($D_CO2_l, 0, 0, 0, 0, 0, 0, 0, 0)";
+        dimensions      [0 2 -1 0 0 0 0];
+    }
+
+    D_S
+    {
+        type            exprField;
+        libs            (fieldFunctionObjects);
+        field           D_S;
+        fieldType       volTensorField;
+        writeControl    writeTime;
+        #include        "../settings"
+        expression      "tensor($D_S, 0, 0, 0, 0, 0, 0, 0, 0)";
+        dimensions      [0 2 -1 0 0 0 0];
+    }
+
+    kf
+    {
+        type            exprField;
+        libs            (fieldFunctionObjects);
+        field           kf;
+        writeControl    writeTime;
+        #include        "../settings"
+        expression      "$kf";
+        dimensions      [0 0 -1 0 0 0 0];
+    }
+
+    CO2
+    {
+        type            aniScalarTransport;
+        libs            (solverFunctionObjects);
+        writeControl    writeTime;
+        field           CO2;
+        nut             D_CO2;
+        alphaD          0;
+        alphaDt         1;
+
+        fvOptions
+        {
+            reaction
+                {
+                    type            scalarCodedSource;
+                    name            CO2_react;
+                    selectionMode   all;
+                    fields          (CO2);
+                    active          yes;
+
+                    codeOptions
+                    #{#};
+
+                    codeConstrain
+                    #{#};
+
+                    codeCorrect #{#};
+
+                    codeInclude
+                    #{
+                        #include "fvCFD.H"
+                    #};
+
+                    codeAddSup
+                    #{
+                        const scalarField& V = mesh_.V();
+                        
+                        const fvMesh& mesh = eqn.psi().mesh();
+                        const volScalarField& kf = mesh.lookupObject<volScalarField>("kf");
+                        const volScalarField& S  = mesh.lookupObject<volScalarField>("S");
+                        const volScalarField& S_old = S.oldTime();
+
+                        //scalarField& Su = eqn.source();
+                        scalarField& Sp = eqn.diag();  // implicit part
+
+                        forAll(Sp, cellI)
+                        {
+                            const scalar coeff = 2 * kf[cellI] * S_old[cellI];
+                            Sp[cellI] -= coeff * V[cellI];  // implicit consumption of S
+                        }
+                    #};
+                }
+        }
+    }
+
+    S
+    {
+        type            aniScalarTransport;
+        libs            (solverFunctionObjects);
+        writeControl    writeTime;
+        field           S;
+        nut             D_S;
+        alphaD          0;       // disables laminar nu contribution
+        alphaDt         1;       // use Dvar as-is
+
+        fvOptions
+        {
+            reaction
+                {
+                    type            scalarCodedSource;
+                    name            S_react;
+                    selectionMode   all;
+                    fields          (S);
+                    active          yes;
+
+                    codeOptions
+                    #{#};
+
+                    codeConstrain
+                    #{#};
+
+                    codeCorrect #{#};
+
+                    codeInclude
+                    #{
+                        #include "fvCFD.H"
+                    #};
+
+                    codeAddSup
+                    #{
+                        const scalarField& V = mesh_.V();
+                        
+                        const fvMesh& mesh = eqn.psi().mesh();
+                        const volScalarField& kf = mesh.lookupObject<volScalarField>("kf");
+                        const volScalarField& CO2  = mesh.lookupObject<volScalarField>("CO2");
+                        const volScalarField& CO2_old = CO2.oldTime();                       
+
+                        //scalarField& Su = eqn.source();
+                        scalarField& Sp = eqn.diag();  // implicit part
+
+                        forAll(Sp, cellI)
+                        {
+                            const scalar coeff = kf[cellI] * CO2_old[cellI];
+                            Sp[cellI] -= coeff * V[cellI];  // implicit consumption of S
+                        }
+                    #};
+                }
+        }
+    }
+}
+
+// ************************************************************************* //
