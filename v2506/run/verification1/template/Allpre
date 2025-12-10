@@ -9,4 +9,6 @@ touch case.foam
 
 runApplication blockMesh
 
+#runApplication setExprFields
+
 #------------------------------------------------------------------------------

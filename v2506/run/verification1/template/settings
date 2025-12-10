@@ -1,0 +1,17 @@
+
+n_R         250;            // Number of cells in radial direction
+n_z         250;            // Number of cells in axial direction
+n_procs     4;              // Number of processors for parallel run
+
+D_CO2_l     2e-10;          // Diffusion coefficient of CO2 in liquid phase [m²/s]
+H_cc        3.25;           // Henry's law constant for CO2 [mol/(m³·Pa)]
+C_S         1.0;            // Sorbent Concentration [mol/m³]
+l           3;              // Length of the fibre [m]
+nu          1e-6;           // Kinematic viscosity [m²/s]
+
+U_avg       #eval "$D_CO2_l*$l/($R*$R*$zeta)";  // Average inlet velocity [m/s]
+K_ext       #eval "$Bi*$H_cc*$D_CO2_l/$R";      // External mass transfer coefficient [m/s]
+D_S         #eval "$theta*$D_CO2_l";            // Diffusion coefficient of sorbent in liquid phase [m²/s]
+C_CO2_g     #eval "$epsilon*$C_S/$H_cc";        // Saturation concentration of CO2 in liquid phase [mol/m³]
+C_CO2_l     #eval "$H_cc*$C_CO2_g";              // Inlet concentration of CO2 in liquid phase [mol/m³]
+kf          #eval "$Da*$D_CO2_l/($C_S*$R*$R)";  // Reaction rate constant [m³/(mol·s)]
