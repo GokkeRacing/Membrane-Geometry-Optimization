@@ -22,32 +22,11 @@ boundaryField
 {
     surface
     {
-        type            codedFixedValue;
-        value           $internalField;
-        name            massTransferCO2;
-        
-        code
-        #{
-            const scalar K_ext = {K_ext}; // External mass transfer coefficient [m/s]
-            const scalar D_CO2_l = {D_CO2_l}; // Diffusion coefficient of CO2 in liquid phase [m²/s]
-            const scalar C_CO2_g = {C_CO2_g}; // Saturation concentration of CO2 in liquid phase
-
-            const volScalarField& CO2 = this->db().lookupObject<volScalarField>("CO2");
-            const scalarField& H_cc = this->db().lookupObject<volScalarField>("H_cc").boundaryField()[patch().index()];
-
-            Info << "Applying mass transfer boundary condition for CO2 on patch: " << patch().name() << endl;
-
-            scalarField& patchField = *this;
-            forAll(patchField, faceI)
-            {
-                label cellI = patch().faceCells()[faceI];
-
-                scalar cellValue = CO2[cellI];
-                scalar C_CO2_grad = K_ext/D_CO2_l * (C_CO2_g - patchField[faceI]/H_cc[faceI]);
-
-                patchField[faceI] = cellValue + C_CO2_grad / (patch().deltaCoeffs()[faceI]);
-            }
-        #};
+        type       implicitGradient;
+        H_cc       {H_cc};
+        D_CO2_l    {D_CO2_l};
+        C_CO2_g    {C_CO2_g};
+        K_ext      {K_ext};
     }
     inlet
     {
