@@ -22,7 +22,7 @@ boundaryField
 {
     surface
     {
-        type       implicitGradient;
+        type       externalSpecieDiffusionResistance;
         H_cc       {H_cc};
         D_CO2_l    {D_CO2_l};
         C_CO2_g    {C_CO2_g};

@@ -24,61 +24,34 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::implicitGradientFvPatchScalarField
+    Foam::externalSpecieDiffusionResistanceFvPatchScalarField
 
 Group
     grpGenericBoundaryConditions
 
 Description
-    This boundary condition provides a implicitGradient condition,
-    calculated as:
-
-        \f[
-            Q = Q_{0} + Q_{p} + s*Q_{t}
-        \f]
-
-    where
-    \vartable
-        s      | single scalar value [units]
-        Q_{0}  | single scalar value [units]
-        Q_{p}  | scalar field across patch [units]
-        Q_{t}  | scalar function of time [units]
-    \endtable
+    This boundary condition provides a externalSpecieDiffusionResistance condition
 
 Usage
-    \table
-        Property   | Description                  | Req'd | Default
-        scalarData | single scalar value          | yes |
-        data       | single scalar value          | yes |
-        fieldData  | scalar field across patch    | yes |
-        timeVsData | scalar function of time      | yes |
-        wordData   | word, eg name of data object | no  | wordDefault
-    \endtable
-
     Example of the boundary condition specification:
     \verbatim
     <patchName>
     {
-        type       implicitGradient;
-        scalarData -1;
-        data       1;
-        fieldData  uniform 3;
-        timeVsData table (
-                             (0 0)
-                             (1 2)
-                          );
-        wordName   anotherName;
-        value      uniform 4; // optional initial value
+        type       externalSpecieDiffusionResistance;
+        H_cc       3.25;
+        D_CO2_l    2e-10;
+        C_CO2_g    1.6e-5;
+        K_ext      1.3e-3;
     }
     \endverbatim
 
 SourceFiles
-    implicitGradientFvPatchScalarField.C
+    externalSpecieDiffusionResistanceFvPatchScalarField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef implicitGradientFvPatchScalarField_H
-#define implicitGradientFvPatchScalarField_H
+#ifndef externalSpecieDiffusionResistanceFvPatchScalarField_H
+#define externalSpecieDiffusionResistanceFvPatchScalarField_H
 
 #include "mixedFvPatchFields.H"
 
@@ -88,17 +61,17 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-     Class implicitGradientFvPatchScalarField Declaration
+     Class externalSpecieDiffusionResistanceFvPatchScalarField Declaration
 \*---------------------------------------------------------------------------*/
 
-class implicitGradientFvPatchScalarField
+class externalSpecieDiffusionResistanceFvPatchScalarField
 :
     public mixedFvPatchScalarField
 {
     // Private Data
     
         //- Henry's constant [dimensionless]
-        scalar H_cc_;
+        scalar H_cc;
         
         //- CO2 diffusion coefficient in liquid [m^2/s]
         scalar D_CO2_l;
@@ -113,20 +86,20 @@ class implicitGradientFvPatchScalarField
 public:
 
     //- Runtime type information
-    TypeName("implicitGradient");
+    TypeName("externalSpecieDiffusionResistance");
 
 
     // Constructors
 
         //- Construct from patch and internal field
-        implicitGradientFvPatchScalarField
+        externalSpecieDiffusionResistanceFvPatchScalarField
         (
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&
         );
 
         //- Construct from patch, internal field and dictionary
-        implicitGradientFvPatchScalarField
+        externalSpecieDiffusionResistanceFvPatchScalarField
         (
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
@@ -134,18 +107,18 @@ public:
         );
 
         //- Construct by mapping onto a new patch
-        implicitGradientFvPatchScalarField
+        externalSpecieDiffusionResistanceFvPatchScalarField
         (
-            const implicitGradientFvPatchScalarField&,
+            const externalSpecieDiffusionResistanceFvPatchScalarField&,
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
             const fvPatchFieldMapper&
         );
 
         //- Construct as copy
-        implicitGradientFvPatchScalarField
+        externalSpecieDiffusionResistanceFvPatchScalarField
         (
-            const implicitGradientFvPatchScalarField&
+            const externalSpecieDiffusionResistanceFvPatchScalarField&
         );
 
         //- Construct and return a clone
@@ -153,14 +126,14 @@ public:
         {
             return tmp<fvPatchScalarField>
             (
-                new implicitGradientFvPatchScalarField(*this)
+                new externalSpecieDiffusionResistanceFvPatchScalarField(*this)
             );
         }
 
         //- Construct as copy setting internal field reference
-        implicitGradientFvPatchScalarField
+        externalSpecieDiffusionResistanceFvPatchScalarField
         (
-            const implicitGradientFvPatchScalarField&,
+            const externalSpecieDiffusionResistanceFvPatchScalarField&,
             const DimensionedField<scalar, volMesh>&
         );
 
@@ -172,7 +145,7 @@ public:
         {
             return tmp<fvPatchScalarField>
             (
-                new implicitGradientFvPatchScalarField(*this, iF)
+                new externalSpecieDiffusionResistanceFvPatchScalarField(*this, iF)
             );
         }
 

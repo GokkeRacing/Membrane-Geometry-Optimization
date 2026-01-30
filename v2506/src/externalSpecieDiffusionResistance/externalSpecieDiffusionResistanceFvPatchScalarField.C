@@ -1,4 +1,4 @@
-#include "implicitGradientFvPatchScalarField.H"
+#include "externalSpecieDiffusionResistanceFvPatchScalarField.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -8,14 +8,14 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-implicitGradientFvPatchScalarField::implicitGradientFvPatchScalarField
+externalSpecieDiffusionResistanceFvPatchScalarField::externalSpecieDiffusionResistanceFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF
 )
 :
     mixedFvPatchScalarField(p, iF),
-    H_cc_(0.0),
+    H_cc(0.0),
     D_CO2_l(0.0),
     C_CO2_g(0.0),
     K_ext(0.0)
@@ -25,7 +25,7 @@ implicitGradientFvPatchScalarField::implicitGradientFvPatchScalarField
     refGrad() = 0.0;
 }
 
-implicitGradientFvPatchScalarField::implicitGradientFvPatchScalarField
+externalSpecieDiffusionResistanceFvPatchScalarField::externalSpecieDiffusionResistanceFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
@@ -33,7 +33,7 @@ implicitGradientFvPatchScalarField::implicitGradientFvPatchScalarField
 )
 :
     mixedFvPatchScalarField(p, iF),
-    H_cc_(dict.get<scalar>("H_cc")),
+    H_cc(dict.get<scalar>("H_cc")),
     D_CO2_l(dict.get<scalar>("D_CO2_l")),
     C_CO2_g(dict.get<scalar>("C_CO2_g")),
     K_ext(dict.get<scalar>("K_ext"))
@@ -41,41 +41,41 @@ implicitGradientFvPatchScalarField::implicitGradientFvPatchScalarField
     fvPatchScalarField::operator=(patchInternalField());
 }
 
-implicitGradientFvPatchScalarField::implicitGradientFvPatchScalarField
+externalSpecieDiffusionResistanceFvPatchScalarField::externalSpecieDiffusionResistanceFvPatchScalarField
 (
-    const implicitGradientFvPatchScalarField& ptf,
+    const externalSpecieDiffusionResistanceFvPatchScalarField& ptf,
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
     const fvPatchFieldMapper& mapper
 )
 :
     mixedFvPatchScalarField(ptf, p, iF, mapper),
-    H_cc_(ptf.H_cc_),
+    H_cc(ptf.H_cc),
     D_CO2_l(ptf.D_CO2_l),
     C_CO2_g(ptf.C_CO2_g),
     K_ext(ptf.K_ext)
 {}
 
-implicitGradientFvPatchScalarField::implicitGradientFvPatchScalarField
+externalSpecieDiffusionResistanceFvPatchScalarField::externalSpecieDiffusionResistanceFvPatchScalarField
 (
-    const implicitGradientFvPatchScalarField& ptf
+    const externalSpecieDiffusionResistanceFvPatchScalarField& ptf
 )
 :
     mixedFvPatchScalarField(ptf),
-    H_cc_(ptf.H_cc_),
+    H_cc(ptf.H_cc),
     D_CO2_l(ptf.D_CO2_l),
     C_CO2_g(ptf.C_CO2_g),
     K_ext(ptf.K_ext)
 {}
 
-implicitGradientFvPatchScalarField::implicitGradientFvPatchScalarField
+externalSpecieDiffusionResistanceFvPatchScalarField::externalSpecieDiffusionResistanceFvPatchScalarField
 (
-    const implicitGradientFvPatchScalarField& ptf,
+    const externalSpecieDiffusionResistanceFvPatchScalarField& ptf,
     const DimensionedField<scalar, volMesh>& iF
 )
 :
     mixedFvPatchScalarField(ptf, iF),
-    H_cc_(ptf.H_cc_),
+    H_cc(ptf.H_cc),
     D_CO2_l(ptf.D_CO2_l),
     C_CO2_g(ptf.C_CO2_g),
     K_ext(ptf.K_ext)
@@ -83,44 +83,37 @@ implicitGradientFvPatchScalarField::implicitGradientFvPatchScalarField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void implicitGradientFvPatchScalarField::updateCoeffs()
+void externalSpecieDiffusionResistanceFvPatchScalarField::updateCoeffs()
 {
     if (updated()) return;
 
-    const scalarField& delta = patch().deltaCoeffs();
+    // --- Compute the patch-based boundary fraction for the Robin BC ---
+    // Physical quantities:
+    // K_ext  : Mass transfer coefficient
+    // H_cc_  : Henry's constant
+    // D_CO2_l: Diffusion coefficient in liquid
+    // C_CO2_g: Gas-phase concentration
 
-    // Implementing: grad(phi) * D_CO2_l = -K_ext*(C_CO2_g - phi/H_cc)
-    // Rearranged: D_CO2_l * grad(phi) + (K_ext/H_cc) * phi = K_ext * C_CO2_g
-    //
-    // mixedFvPatchField uses:
-    //   snGrad = valueFraction*(refValue - patchInternalField) - (1-valueFraction)*refGrad
-    //   Which gives boundary flux: -D*snGrad
-    //   And we need: D_CO2_l*grad(phi) = -K_ext*(C_CO2_g - phi/H_cc)
-    //
-    // The mixed BC is: (1-vf)*grad(phi) + vf*delta*(phi - refValue) = (1-vf)*refGrad
-    // Setting refGrad = 0 and rearranging:
-    //   grad(phi) + vf/(1-vf)*delta*(phi - refValue) = 0
-    //
-    // Comparing with: grad(phi) + (K_ext/(D_CO2_l*H_cc))*phi = (K_ext*C_CO2_g)/D_CO2_l
-    //
-    // We get:
-    //   alpha = K_ext/(D_CO2_l*H_cc)
-    //   vf/(1-vf)*delta = alpha
-    //   refValue = C_CO2_g*H_cc
+    const scalarField& deltaCoeff = patch().deltaCoeffs();
 
-    scalar alpha = K_ext / (D_CO2_l * H_cc_);
+    // Compute valueFraction using explicit resistance balance:
+    // boundary resistance = H_cc_ / K_ext
+    // diffusion resistance = 1 / deltaCoeff / D_CO2_l
+    valueFraction() = K_ext / (K_ext + D_CO2_l * H_cc * deltaCoeff);
 
-    valueFraction() = alpha / (alpha + delta);
-    refValue()      = C_CO2_g * H_cc_;
-    refGrad()       = 0.0;
+    // Reference (Dirichlet) value: Henry's law
+    refValue() = C_CO2_g * H_cc;
+
+    // Gradient along patch normal is zero
+    refGrad() = 0.0;
 
     mixedFvPatchScalarField::updateCoeffs();
 }
 
-void implicitGradientFvPatchScalarField::write(Ostream& os) const
+void externalSpecieDiffusionResistanceFvPatchScalarField::write(Ostream& os) const
 {
     fvPatchScalarField::write(os);
-    os.writeEntry("H_cc", H_cc_);
+    os.writeEntry("H_cc", H_cc);
     os.writeEntry("D_CO2_l", D_CO2_l);
     os.writeEntry("C_CO2_g", C_CO2_g);
     os.writeEntry("K_ext", K_ext);
@@ -132,7 +125,7 @@ void implicitGradientFvPatchScalarField::write(Ostream& os) const
 makePatchTypeField
 (
     fvPatchScalarField,
-    implicitGradientFvPatchScalarField
+    externalSpecieDiffusionResistanceFvPatchScalarField
 );
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

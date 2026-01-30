@@ -32,7 +32,7 @@ runTimeModifiable   yes;
 
 libs
 (
-    "libimplicitGradient.so"
+    "externalSpecieDiffusionResistance.so"
 );
 
 
