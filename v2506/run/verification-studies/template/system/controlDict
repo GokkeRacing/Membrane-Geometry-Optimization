@@ -35,9 +35,10 @@ libs
     "libexternalSpecieDiffusionResistance.so"
 );
 
-
 functions
 {
+    #include "columnAverage"
+
     writeCellVolumes
     {
         type            writeCellVolumes;
