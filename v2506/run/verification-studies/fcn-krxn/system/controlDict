@@ -43,6 +43,7 @@ functions
     #include "FO_writeCellCentres"
     #include "FO_createScalarFields"
     #include "FO_scalarTransport"
+    #include "FO_sampling"
 }
 
 // ************************************************************************* //
