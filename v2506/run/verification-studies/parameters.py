@@ -34,6 +34,8 @@ Parameter['D_S'] = theta * Parameter['D_CO2']  # m^2/s (Diffusion coefficient of
 Da = 50*30000
 Parameter['k_rxn'] = Da * Parameter['D_CO2'] / (Parameter['C_S0'] * Parameter['R']**2)
 
+Parameter['R'] = 250e-6             # m (Radius of the fiber)  
+
 print('Parameters:', Parameter)
 
 with open('overview', 'w') as file:
