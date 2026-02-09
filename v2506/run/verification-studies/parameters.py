@@ -1,30 +1,41 @@
-H_cc = 3.25         # -
-C_S0 = 1            # mol/L (Initial concentration of sorbent)
-z = 3               # m
-R = 250e-6          # m (Radius of the fiber)   
-#K_ext = 1.25e-3     # m/s (External mass transfer coefficient)
+import numpy as np
+
+Parameter = {}
+
+Parameter['R'] = 250e-6          # m (Radius of the fiber)  
+Parameter['L'] = 3               # m
+
+Parameter['n_R'] = 400              # - (Number of radial grid points)
+Parameter['n_z'] = 400              # - (Number of axial grid points)
+
+Parameter['grading_axial'] = 1.0           # - (Grading factor for axial grid)
+Parameter['grading_radial'] = 0.05          # - (Grading factor for radial grid)
+
+Parameter['n_procs'] = 4             # - (Number of processes for parallel computation)
+
+Parameter['H_cc'] = 3.25           # s (Characteristic time for diffusion in the liquid phase)
+Parameter['D_CO2'] = 2e-10
+Parameter['C_S0'] = 1.0            # mol/L (Initial concentration of sorbent)
+Parameter['C_CO20'] = 0.0           # mol/L (Initial concentration of CO2 in liquid phase)
+Parameter['nu'] = 1e-6           # m^2/s (Kinematic viscosity of the fluid)
 
 zeta = 250
-D_CO2_l = 2e-10
-u_l = D_CO2_l * z/(zeta*R**2)
-print(f"Liquid velocity: {u_l:.5e} m/s")
+Parameter['Uavg'] = Parameter['D_CO2'] * Parameter['L']/(zeta*Parameter['R']**2)
+
+epsilon = 5.2e-5
+Parameter['C_CO2_g'] = epsilon * Parameter['C_S0'] / Parameter['H_cc']  # mol/L (Concentration of CO2 in gas phase)
 
 Bi = 500
-K_ext = Bi * H_cc * D_CO2_l / (R)  # m/s (External mass transfer coefficient)
-print(f"External mass transfer coefficient: {K_ext:.5e} m/s")
+Parameter['K_ext'] = Bi * Parameter['H_cc'] * Parameter['D_CO2'] / (Parameter['R'])  # m/s (External mass transfer coefficient)
 
 theta = 0.24
-D_S = theta * D_CO2_l  # m^2/s (Diffusion coefficient of salt in liquid phase)
-print(f"Diffusion coefficient of sorbent in liquid phase: {D_S:.5e} m^2/s")
-print(f'Diffusion coefficient of CO2 in liquid phase: {D_CO2_l:.5e} m^2/s')
-
-C_CO2_g = 400*10**(-6)*101.325/(8.31446261815324*298)
-epsilon = H_cc * C_CO2_g / C_S0
-C_CO2_l = H_cc * C_CO2_g  # mol/l (Saturation concentration of CO2 in liquid phase)
-print(f'CO2 concentration in gas phase: {C_CO2_g:.5e} mol/l')
-print(f"Saturation concentration of CO2 in liquid phase: {C_CO2_l:.5e} mol/l")
+Parameter['D_S'] = theta * Parameter['D_CO2']  # m^2/s (Diffusion coefficient of salt in liquid phase)
 
 Da = 30000
-k_rxn = Da * D_CO2_l / (C_S0 * R**2)
-print(f"Reaction rate constant: {k_rxn:.5e} m^3/(mol*s)")
+Parameter['k_rxn'] = Da * Parameter['D_CO2'] / (Parameter['C_S0'] * Parameter['R']**2)
 
+print('Parameters:', Parameter)
+
+with open('overview', 'w') as file:
+    for par in Parameter:
+        file.write(f'{par} {Parameter[par]:4e}\n')
