@@ -1,0 +1,14 @@
+R 900.0e-6
+L 1.175
+n_R 200
+n_z 200
+n_procs 4
+D_CO2 1.6e-9
+H_cc 0.42
+C_S0 2.0
+C_CO20 0.0
+nu 1.0e-06
+Uavg 2.0e-5
+K_ext 6.4e-3
+D_S 2.7e-9
+C_CO2_g 1.8e-5

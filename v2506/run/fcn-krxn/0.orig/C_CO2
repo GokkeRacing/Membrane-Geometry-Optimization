@@ -24,7 +24,7 @@ boundaryField
     {
         type       externalSpecieDiffusionResistance;
         H_cc       0.42;
-        D_CO2_l    1.6e-9;
+        D_CO2      1.6e-9;
         C_CO2_g    1.8e-5;
         K_ext      6.4e-3;
     }

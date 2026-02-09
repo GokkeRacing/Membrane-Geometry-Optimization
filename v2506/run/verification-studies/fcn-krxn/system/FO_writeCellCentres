@@ -1,6 +1,0 @@
-writeCellCentres
-{
-    type            writeCellCentres;
-    libs            (fieldFunctionObjects);
-    writeControl    writeTime;
-}
