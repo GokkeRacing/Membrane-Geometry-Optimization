@@ -1,0 +1,41 @@
+D_CO2
+{
+    type            exprField;
+    libs            (fieldFunctionObjects);
+    field           D_CO2;
+    fieldType       volTensorField;
+    writeControl    writeTime;
+    expression      "tensor({D_CO2}, 0, 0, 0, 0, 0, 0, 0, 0)";
+    dimensions      [0 2 -1 0 0 0 0];
+}
+
+D_S
+{
+    type            exprField;
+    libs            (fieldFunctionObjects);
+    field           D_S;
+    fieldType       volTensorField;
+    writeControl    writeTime;
+    expression      "tensor({D_S}, 0, 0, 0, 0, 0, 0, 0, 0)";
+    dimensions      [0 2 -1 0 0 0 0];
+}
+
+k_rxn
+{
+    type            exprField;
+    libs            (fieldFunctionObjects);
+    field           k_rxn;
+    writeControl    writeTime;
+    expression      "{k_rxn}";
+    dimensions      [0 0 -1 0 0 0 0];
+}
+
+H_cc
+{
+    type            exprField;
+    libs            (fieldFunctionObjects);
+    field           H_cc;
+    writeControl    writeTime;
+    expression      "{H_cc}";
+    dimensions      [0 0 0 0 0 0 0];
+}

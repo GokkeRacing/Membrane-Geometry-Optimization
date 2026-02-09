@@ -1,0 +1,67 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # Run from this directory
+
+gnuplot<<'EOF'
+    # Read all parameters from overview file
+    system("awk 'NF >= 2 {print $1 \" = \" $2}' overview > .params.tmp")
+    load '.params.tmp'
+    system("rm -f .params.tmp")
+    
+    # Print all loaded parameters
+    system("awk 'NF >= 2 {printf \"%s = %s\\n\", $1, $2}' overview")
+
+    set datafile commentschars "#"
+    set datafile separator ","
+    set grid
+
+    # --------------------------------------------------
+    # Check if simulation data exists
+    sim_co2_exists = system("test -f CO2.csv && echo 1 || echo 0")
+    sim_s_exists = system("test -f S.csv && echo 1 || echo 0")
+
+    ref_co2_exists = system("test -f ref_CO2.csv && echo 1 || echo 0")
+    ref_s_exists = system("test -f ref_S.csv && echo 1 || echo 0")
+
+    # --------------------------------------------------
+    # CO2 plot
+    set terminal pngcairo size 800,600 enhanced font 'Verdana,10'
+    set output 'CO2.png'
+    set xlabel "Non-dimensional axial position, {/Symbol z}"
+    set ylabel "Non-dimensional radial-averaged concentration, {/Symbol f}_{CO2}"
+
+    if (sim_co2_exists eq "1" && ref_co2_exists eq "1") {
+        plot \
+        "CO2.csv" u ((D_CO2*$1)/(Uavg*R*R)):($2/(C_CO2_g*H_cc)) w l lw 2 lc rgb "black" title "Simulation", \
+        "ref_CO2.csv" u 1:2 w p pt 7 ps 1.2 lc rgb "black" title "Reference data"
+    } else {
+        if (sim_co2_exists eq "1") {
+            plot "CO2.csv" u ((D_CO2*$1)/(Uavg*R*R)):($2/(C_CO2_g*H_cc)) w l lw 2 lc rgb "black" title "Simulation"
+        } else {
+            if (ref_co2_exists eq "1") {
+                plot "ref_CO2.csv" u 1:2 w p pt 7 ps 1.2 lc rgb "black" title "Reference data"
+            }
+        }
+    }
+
+    # --------------------------------------------------
+    # S plot
+    set terminal pngcairo size 800,600 enhanced font 'Verdana,10'
+    set output 'S.png'
+    set xlabel "Non-dimensional axial position, {/Symbol z}"
+    set ylabel "Non-dimensional radial-averaged concentration, {/Symbol f}_{S}"
+
+    if (sim_s_exists eq "1" && ref_s_exists eq "1") {
+        plot \
+        "S.csv" u ((D_CO2*$1)/(Uavg*R*R)):($2/C_S0) w l lw 2 lc rgb "black" title "Simulation", \
+        "ref_S.csv" u 1:2 w p pt 7 ps 1.2 lc rgb "black" title "Reference data"
+    } else {
+        if (sim_s_exists eq "1") {
+            plot "S.csv" u ((D_CO2*$1)/(Uavg*R*R)):($2/C_S0) w l lw 2 lc rgb "black" title "Simulation"
+        } else {
+            if (ref_s_exists eq "1") {
+                plot "ref_S.csv" u 1:2 w p pt 7 ps 1.2 lc rgb "black" title "Reference data"
+            }
+        }
+    }
+
+EOF

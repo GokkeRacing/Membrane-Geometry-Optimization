@@ -1,0 +1,54 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2512                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       volScalarField;
+    location    "0";
+    object      C_CO2;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [];
+
+internalField   uniform 0.0;
+
+boundaryField
+{
+    surface
+    {
+        type       externalSpecieDiffusionResistance;
+        H_cc       {H_cc};
+        D_CO2      {D_CO2};
+        C_CO2_g    {C_CO2_g};
+        K_ext      {K_ext};
+    }
+    inlet
+    {
+        type            fixedValue;
+        value           uniform {C_CO20};
+    }
+    outlet
+    {
+        type            inletOutlet;
+        inletValue      $internalField;
+        value           $internalField;
+    }
+    "wedge.*"
+    {
+        type            wedge;
+    }
+    defaultFaces
+    {
+        type            empty;
+        value           $internalField;
+    }
+}
+
+
+// ************************************************************************* //
