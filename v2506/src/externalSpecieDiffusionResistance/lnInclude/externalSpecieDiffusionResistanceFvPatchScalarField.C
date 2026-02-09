@@ -1,1 +1,0 @@
-../externalSpecieDiffusionResistanceFvPatchScalarField.C
