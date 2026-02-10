@@ -1,8 +1,8 @@
-layerAverage
+writeData
 {
     libs ("libutilityFunctionObjects.so");
     type coded;
-    name layerAverage;
+    name writeData;
     enabled yes;
     writeControl writeTime;
 
@@ -49,19 +49,53 @@ layerAverage
     reduce(minZ, minOp<scalar>());
     reduce(maxZ, maxOp<scalar>());
     
-    // Create list of all cell z-coordinates and volumes for sorting
-    labelList cellOrder(C.size());
-    forAll(cellOrder, i) cellOrder[i] = i;
-    
-    // Sort cells by z-coordinate
-    Foam::sort(cellOrder, [&](label a, label b) 
+    // Gather all z-coordinates to master for global sorting
+    List<scalar> allZ(C.size());
+    forAll(C, cellI)
     {
-        return C[a].component(2) < C[b].component(2);
-    });
+        allZ[cellI] = C[cellI].component(2);
+    }
     
-    // Calculate cells per layer (approximately)
-    label totalCells = returnReduce(C.size(), sumOp<label>());
+    // Combine lists from all processors
+    List<List<scalar>> gatheredZ(Pstream::nProcs());
+    gatheredZ[Pstream::myProcNo()] = allZ;
+    Pstream::gatherList(gatheredZ);
+    
+    // Flatten and broadcast
+    List<scalar> globalZ;
+    if (Pstream::master())
+    {
+        label totalSize = 0;
+        forAll(gatheredZ, proci)
+        {
+            totalSize += gatheredZ[proci].size();
+        }
+        
+        globalZ.setSize(totalSize);
+        label idx = 0;
+        forAll(gatheredZ, proci)
+        {
+            forAll(gatheredZ[proci], i)
+            {
+                globalZ[idx++] = gatheredZ[proci][i];
+            }
+        }
+    }
+    Pstream::broadcast(globalZ);
+    
+    // Sort globally and determine layer boundaries
+    Foam::sort(globalZ);
+    label totalCells = globalZ.size();
     label cellsPerLayer = max(1, totalCells / nLayers);
+    
+    scalarField layerBoundaries(nLayers + 1);
+    layerBoundaries[0] = minZ - SMALL;
+    for (label i = 1; i < nLayers; i++)
+    {
+        label idx = min(i * cellsPerLayer, totalCells - 1);
+        layerBoundaries[i] = globalZ[idx];
+    }
+    layerBoundaries[nLayers] = maxZ + SMALL;
     
     // Initialize arrays for each layer
     scalarField layerS_sum(nLayers, 0.0);
@@ -69,16 +103,21 @@ layerAverage
     scalarField layerVolume(nLayers, 0.0);
     scalarField layerZ_sum(nLayers, 0.0);
     
-    // Accumulate values for each layer based on sorted cell distribution
-    label globalCellCount = 0;
-    forAll(cellOrder, i)
+    // Accumulate values for each layer based on global boundaries
+    forAll(C, cellI)
     {
-        label cellI = cellOrder[i];
         scalar z = C[cellI].component(2);
         
-        // Determine layer based on cumulative cell count
-        label layerIdx = min(globalCellCount / cellsPerLayer, nLayers - 1);
-        globalCellCount++;
+        // Find which layer this cell belongs to
+        label layerIdx = 0;
+        for (label i = 0; i < nLayers; i++)
+        {
+            if (z >= layerBoundaries[i] && z < layerBoundaries[i+1])
+            {
+                layerIdx = i;
+                break;
+            }
+        }
         
         layerS_sum[layerIdx] += S[cellI] * V[cellI];
         layerCO2_sum[layerIdx] += CO2[cellI] * V[cellI];
