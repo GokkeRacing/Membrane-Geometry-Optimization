@@ -43,7 +43,7 @@ CO2
 
                     forAll(Sp, cellI)
                     {
-                        const scalar coeff = 2 * k_rxn[cellI] * C_S_old[cellI];
+                        const scalar coeff = {s} * k_rxn[cellI] * C_S_old[cellI];
                         Sp[cellI] -= coeff * V[cellI];
                     }
                 #};

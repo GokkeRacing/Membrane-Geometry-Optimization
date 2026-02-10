@@ -2,20 +2,17 @@ Parameter = {}
 
 Parameter['R'] = 250e-6             # m (Radius of the fiber)  
 Parameter['L'] = 3                  # m (Length of the fiber)
-
 Parameter['n_R'] = 400              # - (Number of radial grid points)
 Parameter['n_z'] = 400              # - (Number of axial grid points)
-
 Parameter['grading_axial'] = 1.0    # - (Grading factor for axial direction)
 Parameter['grading_radial'] = 0.05  # - (Grading factor for radial direction)
-
 Parameter['n_procs'] = 4            # - (Number of processes for parallel computation)
-
 Parameter['H_cc'] = 3.25            # s (Characteristic time for diffusion in the liquid phase)
 Parameter['D_CO2'] = 2e-10          # m^2/s (Diffusion coefficient of CO2 in liquid phase)
 Parameter['C_S0'] = 1.0             # mol/L (Initial concentration of sorbent)
 Parameter['C_CO20'] = 0.0           # mol/L (Initial concentration of CO2 in liquid phase)
 Parameter['nu'] = 1e-6              # m^2/s (Kinematic viscosity of the fluid)
+Parameter['s'] = 2.0                # - Stoichiometric coefficient for the reaction
 
 zeta = 250
 Parameter['Uavg'] = Parameter['D_CO2'] * Parameter['L']/(zeta*Parameter['R']**2)
@@ -29,7 +26,7 @@ Parameter['K_ext'] = Bi * Parameter['H_cc'] * Parameter['D_CO2'] / (Parameter['R
 theta = 0.24
 Parameter['D_S'] = theta * Parameter['D_CO2']  # m^2/s (Diffusion coefficient of salt in liquid phase)
 
-Da = 50*30000
+Da = 30000
 Parameter['k_rxn'] = Da * Parameter['D_CO2'] / (Parameter['C_S0'] * Parameter['R']**2)
 
 print('Parameters:', Parameter)
