@@ -25,10 +25,10 @@ run_case() {
             ./Allreset
         fi
 
-        # Initialize the case if initialise.sh exists
-        if [ -f "initialise.sh" ]; then
+        # Initialize the case if initialise exists
+        if [ -f "initialise" ]; then
             echo "Initializing case..."
-            bash initialise.sh
+            ./initialise
         fi
         
         # Run the simulation if Allrun exists

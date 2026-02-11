@@ -1,7 +1,7 @@
 # Ignore all files in the diederichsen-and-hatton directory, except for the Allplot files and the data.csv files
 **/diederichsen-and-hatton/**/*
 !**/diederichsen-and-hatton/**/
-!**/diederichsen-and-hatton/**/initialise.sh
+!**/diederichsen-and-hatton/**/initialise
 !**/diederichsen-and-hatton/**/overview
 !**/diederichsen-and-hatton/**/ref*.csv
 !**/diederichsen-and-hatton/template/**

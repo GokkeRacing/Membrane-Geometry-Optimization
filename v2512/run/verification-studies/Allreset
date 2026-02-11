@@ -1,0 +1,46 @@
+#!/bin/bash
+cd ${0%/*} || exit 1    # Run from this directory
+
+echo "=========================================="
+echo "Resetting all verification study cases"
+echo "=========================================="
+
+# Function to run a case
+run_case() {
+    local case_path="$1"
+    local case_name=$(basename "$case_path")
+    local script_dir="$PWD"
+    
+    (     
+        cd "$script_dir/$case_path"
+        
+        # Reset the case if already run
+        if [ -f "Allreset" ]; then
+            ./Allreset
+        fi
+        
+        echo "Reset: $case_path"
+    ) &
+}
+
+# Find and run all cases in parallel
+# Use find to get all subdirectories, excluding template
+while IFS= read -r -d '' case_dir; do
+    run_case "$case_dir"
+    pids+=($!)
+done < <(find . -mindepth 1 -type d -name "case_*" -o -type d -name "fig*" | grep -v "template" | sort | tr '\n' '\0')
+
+# Wait for all background jobs to complete and check for failures
+failed=0
+for pid in "${pids[@]}"; do
+    if ! wait "$pid"; then
+        failed=1
+    fi
+done
+
+echo ""
+echo "=========================================="
+echo "All verification studies reset!"
+echo "=========================================="
+
+#------------------------------------------------------------------------------
