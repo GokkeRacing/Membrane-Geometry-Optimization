@@ -26,7 +26,7 @@ gradSchemes
 
 divSchemes
 {
-    default             bounded Gauss linearUpwind grad(U);
+    default             bounded Gauss upwind;
     div((nuEff*dev2(T(grad(U))))) Gauss linear;
 }
 
