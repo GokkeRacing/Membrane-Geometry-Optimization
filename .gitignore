@@ -1,7 +1,7 @@
 # Ignore all files in the diederichsen-and-hatton directory, except for the Allplot files and the data.csv files
 **/diederichsen-and-hatton/**/*
 !**/diederichsen-and-hatton/**/
-!**/diederichsen-and-hatton/**/initialise.sh
+!**/diederichsen-and-hatton/**/initialise
 !**/diederichsen-and-hatton/**/overview
 !**/diederichsen-and-hatton/**/ref*.csv
 !**/diederichsen-and-hatton/template/**
@@ -10,9 +10,9 @@
 !**/fcn-krxn/**/
 !**/fcn-krxn/**/overview
 !**/fcn-krxn/**/All*
-!**/fcn-krxn/**/0.orig
-!**/fcn-krxn/**/constant
-!**/fcn-krxn/**/system
+!**/fcn-krxn/**/0.orig/**
+!**/fcn-krxn/**/constant/*Properties
+!**/fcn-krxn/**/system/**
 
 **/linux64*
 **/lnInclude

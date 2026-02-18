@@ -1,0 +1,76 @@
+#!/bin/bash
+cd ${0%/*} || exit 1    # Run from this directory
+
+echo "=========================================="
+echo "Running all verification study cases"
+echo "=========================================="
+
+# Function to run a case
+run_case() {
+    local case_path="$1"
+    local case_name=$(basename "$case_path")
+    local script_dir="$PWD"
+    
+    (
+        echo ""
+        echo "--------------------------------------"
+        echo "Processing: $case_path"
+        echo "--------------------------------------"
+        
+        cd "$script_dir/$case_path"
+        
+        # Reset the case if already run
+        if [ -f "Allreset" ]; then
+            echo "Resetting case..."
+            ./Allreset
+        fi
+
+        # Initialize the case if initialise exists
+        if [ -f "initialise" ]; then
+            echo "Initializing case..."
+            ./initialise
+        fi
+        
+        # Run the simulation if Allrun exists
+        if [ -f "Allrun" ]; then
+            echo "Running simulation..."
+            ./Allrun
+        fi
+        
+        echo "Completed: $case_path"
+    ) &
+}
+
+# Array to store background job PIDs
+pids=()
+
+# Find and run all cases in parallel
+# Use find to get all subdirectories, excluding template
+while IFS= read -r -d '' case_dir; do
+    run_case "$case_dir"
+    pids+=($!)
+done < <(find . -mindepth 1 -type d -name "case_*" -o -type d -name "fig*" | grep -v "template" | sort | tr '\n' '\0')
+
+# Wait for all background jobs to complete and check for failures
+echo ""
+echo "Waiting for all cases to complete..."
+failed=0
+for pid in "${pids[@]}"; do
+    if ! wait "$pid"; then
+        failed=1
+    fi
+done
+
+echo ""
+if [ $failed -eq 1 ]; then
+    echo "=========================================="
+    echo "ERROR: One or more simulations failed!"
+    echo "=========================================="
+    exit 1
+else
+    echo "=========================================="
+    echo "All verification studies completed!"
+    echo "=========================================="
+fi
+
+#------------------------------------------------------------------------------

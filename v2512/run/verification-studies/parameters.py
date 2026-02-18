@@ -29,6 +29,10 @@ Parameter['D_S'] = theta * Parameter['D_CO2']  # m^2/s (Diffusion coefficient of
 Da = 30000
 Parameter['k_rxn'] = Da * Parameter['D_CO2'] / (Parameter['C_S0'] * Parameter['R']**2) # 1/s (Reaction rate constant)
 
+# f = 50
+# Parameter['R'] = f*Parameter['R']
+# Parameter['L'] = f**2*Parameter['L']
+
 print('Parameters:', Parameter)
 
 with open('overview', 'w') as file:

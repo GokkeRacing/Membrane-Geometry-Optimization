@@ -10,30 +10,29 @@ FoamFile
     format      ascii;
     class       volScalarField;
     location    "0";
-    object      T;
+    object      C_S;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 0 0 1 0 0 0];
+dimensions      [];
 
-internalField   uniform 298;
+internalField   uniform 2.0;
 
 boundaryField
 {
     surface
     {
-        type            fixedValue;
+        type            zeroGradient;
         value           $internalField;
     }
     inlet
     {
         type            fixedValue;
-        value           $internalField;
+        value           uniform 2.0;
     }
     outlet
     {
-        type            inletOutlet;
-        inletValue      $internalField;
+        type            zeroGradient;
         value           $internalField;
     }
     "wedge.*"

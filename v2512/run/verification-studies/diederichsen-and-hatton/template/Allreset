@@ -9,7 +9,7 @@ fi
 
 find . -mindepth 1 \
   ! -name "overview" \
-  ! -name "initialise.sh" \
+  ! -name "initialise" \
   ! -name "ref*.csv" \
   -exec rm -rf {} +
 

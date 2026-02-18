@@ -14,10 +14,10 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-R {R};
-L {L};
-n_R {n_R};
-n_z {n_z};
+R 900.0e-6;
+L 1.175;
+n_R 400;
+n_z 400;
 
 scale       1;
 halfAngle   1;
@@ -38,7 +38,7 @@ vertices
 
 blocks
 (
-    hex (0 1 2 0 3 4 5 3) ($n_R 1 $n_z) simpleGrading ({grading_radial} 1 {grading_axial})
+    hex (0 1 2 0 3 4 5 3) ($n_R 1 $n_z) simpleGrading (0.05 1 1)
 );
 
 edges

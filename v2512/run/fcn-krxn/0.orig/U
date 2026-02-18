@@ -29,7 +29,7 @@ boundaryField
 
         code
         #{
-            const scalar Uavg = {Uavg};
+            const scalar Uavg = 2.0e-5;
             const vectorField& faceCentres = patch().Cf(); 
             static bool firstTime = true;
             static scalar R = -GREAT;

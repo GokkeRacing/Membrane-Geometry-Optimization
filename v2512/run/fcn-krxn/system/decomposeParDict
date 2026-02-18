@@ -7,45 +7,15 @@
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
+    version     2.0;
     format      ascii;
-    class       volScalarField;
-    location    "0";
-    object      T;
+    class       dictionary;
+    object      decomposeParDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 0 0 1 0 0 0];
+numberOfSubdomains  4;
 
-internalField   uniform 298;
-
-boundaryField
-{
-    surface
-    {
-        type            fixedValue;
-        value           $internalField;
-    }
-    inlet
-    {
-        type            fixedValue;
-        value           $internalField;
-    }
-    outlet
-    {
-        type            inletOutlet;
-        inletValue      $internalField;
-        value           $internalField;
-    }
-    "wedge.*"
-    {
-        type            wedge;
-    }
-    defaultFaces
-    {
-        type            empty;
-        value           $internalField;
-    }
-}
-
+method              scotch;
 
 // ************************************************************************* //
