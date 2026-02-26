@@ -7,20 +7,20 @@ class pyPipe(object):
     def __init__(self,*args):
 
         PI1 = 1.0 #pitch distance p/D (-)
-        PI2 = 0.05 #corrugation height h/D (-)
-        n_periods = 3 #number of repeating sections (-)
+        PI2 = 0.1 #corrugation height h/D (-)
+        n_periods = 10 #number of repeating sections (-)
         mesh_density = 30 #charactersistic mesh density 
-        D = 0.04 #diameter (m)
-        rho = 1.0 #density (kg/m^3)
-        mu = 2e-5 #dynamic viscosity (kg/(m*s))
-        U = 5 #bulk velocity (m/s)
+        D = 2*250e-6 #diameter (m)
+        rho = 1000.0 #density (kg/m^3)
+        mu = 1e-6 #dynamic viscosity (kg/(m*s))
+        U = 3.84e-5 #bulk velocity (m/s)
 
         self._r = D/2
         self._l = D*PI1
         self._h = D*PI2
         self._mesh_density = mesh_density
         self._n_cell = 3*mesh_density*2
-        yPlus = 1
+        yPlus = 0.01
         Re = U * D * rho / mu
         Cf = 0.079 * Re ** (-0.25)
         tau_w = 0.5 * Cf * rho * U ** 2
@@ -156,6 +156,7 @@ class pyPipe(object):
             "inlet",
             "{",
             "type patch;",
+            "faces",
             "(",
             "    (0 1 5 4)",
             "    (1 2 6 5)",
@@ -167,6 +168,7 @@ class pyPipe(object):
             "outlet",
             "{",
             "type patch;",
+            "faces",
             "(",
             "    (%i %i %i %i)" % (
                 self._n_cell * 8 - 8 + 0, self._n_cell * 8 - 8 + 1, self._n_cell * 8 - 8 + 5, self._n_cell * 8 - 8 + 4),
@@ -180,9 +182,10 @@ class pyPipe(object):
                 self._n_cell * 8 - 8 + 4, self._n_cell * 8 - 8 + 5, self._n_cell * 8 - 8 + 6, self._n_cell * 8 - 8 + 7),
             ");",
             "}",
-            "walls",
+            "surface",
             "{",
             "type patch;",
+            "faces",
             "(",
         ]
 

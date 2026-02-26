@@ -1,0 +1,134 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2512                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    // ----------------------------------------------------------------------
+    // Pressure
+    // Matching the robust GAMG setup of the working file
+    // ----------------------------------------------------------------------
+   p
+{
+    solver          PCG;
+    preconditioner  DIC;
+    tolerance       1e-6;
+    relTol          1e-3;
+}
+
+pFinal
+{
+    solver          PCG;
+    preconditioner  DIC;
+    tolerance       1e-6;
+    relTol          0;
+}
+
+    // ----------------------------------------------------------------------
+    // Velocity and scalar fields (U, C_S, C_CO2)
+    // Matching smoothSolver behaviour from working file
+    // ----------------------------------------------------------------------
+    /*
+    U
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-9;
+        relTol          1e-4;
+        maxIter         1000;
+    }
+
+    C_S
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-12;
+        relTol          1e-4;
+        maxIter         1000;
+    }
+
+    C_CO2
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-12;
+        relTol          1e-4;
+        maxIter         1000;
+    }
+    */
+    
+    "(U|C_S|C_CO2)"
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-12;
+        relTol          1e-4;
+    }
+
+    "(U|C_S|C_CO2)Final"
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-12;
+        relTol          1e-4;
+    }
+}
+
+
+// --------------------------------------------------------------------------
+// SIMPLE settings — match the first (working) file exactly
+// --------------------------------------------------------------------------
+
+SIMPLE
+{
+    nNonOrthogonalCorrectors 0;
+
+    residualControl
+    {
+        p               1e-2;
+        U               1e-3;
+        "(C_S|C_CO2)"   1e-3;
+    }
+}
+
+// --------------------------------------------------------------------------
+// Relaxation factors — identical style to the working configuration
+// --------------------------------------------------------------------------
+
+relaxationFactors
+{
+    fields
+    {
+        p               0.3;
+    }
+
+    equations
+    {
+        U               0.7;
+        C_S             0.7;
+        C_CO2           0.7;
+    }
+}
+
+// --------------------------------------------------------------------------
+
+cache
+{
+    grad(U);
+}
+
+// ************************************************************************* //
