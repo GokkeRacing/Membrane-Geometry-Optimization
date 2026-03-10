@@ -79,5 +79,8 @@ git rm -r --cached corrugatedTube/__pycache__
 !**/fcn-krxn/**/constant/*Properties
 !**/fcn-krxn/**/system/**
 
+# Ignore all optimization result files
+/optimization_results/**/*
+
 **/linux64*
 **/lnInclude
