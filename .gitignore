@@ -63,8 +63,8 @@
 # End of https://www.toptal.com/developers/gitignore/api/openfoam
  
 # Ignore corrugatedTube Python script files
-git rm -r --cached corrugatedTube/__pycache__
- 
+**/corrugatedTube/__pycache__/*
+
 # Ignore all files in the diederichsen-and-hatton directory, except for the Allplot files and the data.csv files
 **/diederichsen-and-hatton/**/*
 !**/diederichsen-and-hatton/**/

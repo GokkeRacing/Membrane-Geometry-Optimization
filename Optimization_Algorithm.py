@@ -25,25 +25,54 @@ iteration = 0
 
 
 # ============================================================
-# MOCK MODE: Call external mock_blockMesh.py
+# ADVANCED MOCK BLOCKMESH MODE
+# Runs corrugatedTube/createCorrugatedTube.py
+# Saves blockMeshDict for first SAVE_N_BLOCKMESHES iterations
 # ============================================================
 
-def mock_run(A, P, M, script="mock_blockMesh.py", timeout=60):
-    cmd = ["python3", script, f"{A}", f"{P}", f"{M}"]
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+SAVE_N_BLOCKMESHES = 5   # <-- CHANGE THIS NUMBER
+
+def mock_run(A, P, M, iteration):
+    """
+    Runs the real geometry-generating script in corrugatedTube/
+    but still returns a mock objective value.
+
+    Steps:
+      1. cd corrugatedTube
+      2. run createCorrugatedTube.py A P M
+      3. copy generated blockMeshDict to optimization_results/
+    """
+    tube_dir = "corrugatedTube"
+    script = "createCorrugatedTube.py"
+    script_path = os.path.join(tube_dir, script)
+
+    # --- 1) Run the geometry generator ---
+    cmd = ["python3", script_path, str(A), str(P), str(M)]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
 
     if proc.returncode != 0:
         raise RuntimeError(
-            f"{script} failed.\nSTDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}"
+            f"Geometry script failed.\n"
+            f"CMD: {' '.join(cmd)}\n"
+            f"STDOUT:\n{proc.stdout}\n"
+            f"STDERR:\n{proc.stderr}"
         )
 
-    out = proc.stdout.strip()
+    # --- 2) Save generated blockMeshDict (only first N) ---
+    source_dict = os.path.join(tube_dir, "blockMeshDict")
 
-    # out must be a single float string like "0.123456"
-    try:
-        value = float(out)
-    except ValueError:
-        raise ValueError(f"mock_blockMesh returned invalid output:\n{out}")
+    if os.path.exists(source_dict) and iteration <= SAVE_N_BLOCKMESHES:
+        dest_dict = os.path.join(
+            RESULT_DIR, f"blockMeshDict_{iteration}"
+        )
+        subprocess.run(["cp", source_dict, dest_dict])
+
+    # --- 3) Compute the mock objective value ---
+    import math
+    value = (A - 0.4)**2 + 0.1 * math.sin(P) + 0.05 * M
+
+    # print nice status line
+    print(f"blockMesh successful, value = {value:.6f}")
 
     return value
 
@@ -88,7 +117,7 @@ def objective(params):
     # MOCK OR CFD EXECUTION
     # ----------------------------------------
     if EXEC_MODE == "mock":
-        value = mock_run(A, P, M)
+        value = mock_run(A, P, M, iteration)
         print(f"blockMesh successful, value = {value:.6f}")
     else:
         write_params(params_int)
@@ -114,7 +143,7 @@ def objective(params):
 bounds = [
     (0, 1),     # A
     (0, 20),    # P
-    (0, 3),     # M (rounded)
+    (1, 1),     # M (rounded)
 ]
 
 result = differential_evolution(
@@ -155,6 +184,39 @@ np.savetxt(f"{RESULT_DIR}/history_params.txt", np.array(history_params))
 np.savetxt(f"{RESULT_DIR}/history_objective.txt", np.array(history_obj))
 np.savetxt(f"{RESULT_DIR}/history_time.txt", np.array(history_time))
 
+# ============================================================
+# THEORETICAL OPTIMUM FOR MOCK OBJECTIVE (REFERENCE)
+# ============================================================
+
+if EXEC_MODE == "mock":
+    # True global minimum of:
+    # f(A,P,M) = (A - 0.4)^2 + 0.1*sin(P) + 0.05*M
+
+    # Analytic solution:
+    A_true = 0.4
+    M_true = 0      # smallest integer in allowed domain
+
+    # All sine minima within P ∈ [0,20]
+    P_minima = [
+        1.5 * np.pi,               # 3π/2 ≈ 4.712389
+        1.5 * np.pi + 2*np.pi,     # +2π ≈ 10.995574
+        1.5 * np.pi + 4*np.pi      # +4π ≈ 17.278760
+    ]
+
+    # All have sin(P) = -1 → term = -0.1
+    f_true = -0.1
+
+    print("\n============================")
+    print("📌 THEORETICAL OPTIMUM (MOCK FUNCTION)")
+    print(f"  True minimum objective      : {f_true:.6f}")
+    print(f"  True optimal A              : {A_true}")
+    print(f"  True optimal M              : {M_true}")
+    print("  True optimal P values       :")
+    for p in P_minima:
+        print(f"     P ≈ {p:.6f}")
+    print("============================\n")
+else:
+    print("\n(Analytic minimum not shown — EXEC_MODE != 'mock')\n")
 
 # ============================================================
 # CONVERGENCE PLOT
