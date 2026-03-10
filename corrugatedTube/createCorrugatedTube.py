@@ -7,9 +7,9 @@ class pyPipe(object):
     def __init__(self,*args):
 
         PI1 = 1.0 #pitch distance p/D (-)
-        PI2 = 0.1 #corrugation height h/D (-)
-        n_periods = 10 #number of repeating sections (-)
-        mesh_density = 30 #charactersistic mesh density 
+        PI2 = 0.0 #corrugation height h/D (-)
+        n_periods = 800 #number of repeating sections (-)
+        mesh_density = 12 #charactersistic mesh density 
         D = 2*250e-6 #diameter (m)
         rho = 1000.0 #density (kg/m^3)
         mu = 1e-6 #dynamic viscosity (kg/(m*s))
@@ -20,18 +20,18 @@ class pyPipe(object):
         self._h = D*PI2
         self._mesh_density = mesh_density
         self._n_cell = 3*mesh_density*2
-        yPlus = 0.01
+        yPlus = 0.002
         Re = U * D * rho / mu
         Cf = 0.079 * Re ** (-0.25)
         tau_w = 0.5 * Cf * rho * U ** 2
         U_tau = (tau_w / rho) ** 0.5
         delta_y = yPlus * mu / (rho * U_tau)
-        grading = ((D/2-D/2*0.6) * 2 / mesh_density - delta_y) / delta_y
+        grading = (((D/2-D/2*0.6) * 2 / mesh_density - delta_y) / delta_y)
         self._grading = grading
         self._n_periods = n_periods
 
     def _create_one_level_data(self, pos):
-        reduc = 0.7
+        reduc = 0.8
         return [
             (pos[0] + np.cos(0) * self._r, pos[1] + np.sin(0) * self._r, pos[2] + 0),
             (pos[0] + np.cos(1.0 / 2.0 * np.pi) * self._r, pos[1] + np.sin(1.0 / 2.0 * np.pi) * self._r,
@@ -61,7 +61,7 @@ class pyPipe(object):
         return points_array
 
     def _create_one_level_edge_data(self, pos, layer):
-        reduc = 0.6
+        reduc = 0.75
         return [
             "arc %i %i (%e %e %e) " % (
                 (layer * 8) + 0, (layer * 8) + 1, pos[0] + np.cos((1.0 / 4.0) * np.pi) * self._r,
@@ -106,7 +106,7 @@ class pyPipe(object):
     def _create_one_level_block_data(self, layer):
         d = self._mesh_density
         d2 = d
-        z_level_1 = 1
+        z_level_1 = 2
 
         return [
             "hex (%i %i %i %i %i %i %i %i) pipe (%i %i %i) " % (
@@ -184,7 +184,7 @@ class pyPipe(object):
             "}",
             "surface",
             "{",
-            "type patch;",
+            "type wall;",
             "faces",
             "(",
         ]

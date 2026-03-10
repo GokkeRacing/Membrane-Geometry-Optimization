@@ -18,7 +18,7 @@ application         simpleFoam;
 startFrom           latestTime;
 startTime           0;
 stopAt              endTime;
-endTime             100;
+endTime             10000;
 deltaT              1;
 writeControl        timeStep;
 writeInterval       50;
@@ -34,6 +34,8 @@ libs
 (
     "libexternalSpecieDiffusionResistance.so"
 );
+
+/*"libDAC.so"*/
 
 functions
 {

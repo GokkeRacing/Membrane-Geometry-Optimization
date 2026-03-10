@@ -51,8 +51,8 @@ boundaryField
             forAll(field, i)
             {
                 scalar x = faceCentres[i].x();
-                scalar z = faceCentres[i].z();
-                scalar r = sqrt(x*x + z*z);
+                scalar y = faceCentres[i].y();
+                scalar r = sqrt(x*x + y*y);
                 scalar Uz = 2*Uavg * (1.0 - r*r/R/R);
                 field[i] = vector(0, 0, Uz);
             }

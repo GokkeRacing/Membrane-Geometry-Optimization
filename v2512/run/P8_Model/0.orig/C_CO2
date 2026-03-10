@@ -25,7 +25,7 @@ boundaryField
         type       externalSpecieDiffusionResistance;
         H_cc       3.25;
         D_CO2      2.0e-10;
-        C_CO2_g    1.6e-5;
+        C_CO2_g    1.6e-5; // 1.6e-5;
         K_ext      1.3e-3;
     }
     inlet

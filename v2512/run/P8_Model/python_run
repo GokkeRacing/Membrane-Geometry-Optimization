@@ -1,0 +1,8 @@
+
+import subprocess
+
+# 1) Run the mesh-generation script inside the 'systems' folder
+subprocess.check_call(["python3", "createCorrugatedTube.py"], cwd="system")
+
+# 2) Then run the Allrun bash script from the case root
+subprocess.check_call(["bash", "./Allrunparallel"])
