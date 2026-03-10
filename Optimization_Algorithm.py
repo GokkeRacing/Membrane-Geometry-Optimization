@@ -59,7 +59,7 @@ def mock_run(A, P, M, iteration):
         )
 
     # --- 2) Save generated blockMeshDict (only first N) ---
-    source_dict = os.path.join(tube_dir, "blockMeshDict")
+    source_dict = "blockMeshDict"
 
     if os.path.exists(source_dict) and iteration <= SAVE_N_BLOCKMESHES:
         dest_dict = os.path.join(

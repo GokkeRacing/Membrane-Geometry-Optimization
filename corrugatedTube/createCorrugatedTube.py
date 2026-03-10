@@ -8,7 +8,7 @@ class pyPipe(object):
 
         P = 1.0 #pitch distance p/D (-)
         A = 0.1 #corrugation height h/D (-)
-        n_periods = 60 #number of repeating sections (-)
+        n_periods = 5 #number of repeating sections (-)
         mesh_density = 18 #charactersistic mesh density 
         D = 2*250e-6 #diameter (m)
         rho = 1000.0 #density (kg/m^3)

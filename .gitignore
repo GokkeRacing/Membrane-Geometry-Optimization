@@ -64,6 +64,8 @@
  
 # Ignore corrugatedTube Python script files
 **/corrugatedTube/__pycache__/*
+**/corrugatedTube/blockMeshDict
+blockMeshDict
 
 # Ignore all files in the diederichsen-and-hatton directory, except for the Allplot files and the data.csv files
 **/diederichsen-and-hatton/**/*
