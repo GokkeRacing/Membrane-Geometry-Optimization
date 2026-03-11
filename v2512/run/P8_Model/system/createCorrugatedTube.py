@@ -2,33 +2,70 @@ import numpy as np
 from OpenFoamDataWriter import OpenFoamDataWriter
 import os
 
-
 class pyPipe(object):
-    def __init__(self,*args):
+    def __init__(self, pipe_length=1): #here you can specify the physical length of the pipe in meters, or leave it as None to use the default number of periods
+        PI1 = 1.0  # pitch distance p/D (-)
+        PI2 = 0.1  # corrugation height h/D (-)
+        mesh_density = 12
+        D = 2 * 250e-6
+        rho = 1000.0
+        mu = 1e-6
+        U = 3.84e-5
 
-        PI1 = 1.0 #pitch distance p/D (-)
-        PI2 = 0.0 #corrugation height h/D (-)
-        n_periods = 2000 #number of repeating sections (-)
-        mesh_density = 10 #charactersistic mesh density 
-        D = 2*250e-6 #diameter (m)
-        rho = 1000.0 #density (kg/m^3)
-        mu = 1e-6 #dynamic viscosity (kg/(m*s))
-        U = 3.84e-5 #bulk velocity (m/s)
-
-        self._r = D/2
-        self._l = D*PI1
-        self._h = D*PI2
+        self._r = D / 2
+        self._l = D * PI1         # physical pitch length
+        self._h = D * PI2
         self._mesh_density = mesh_density
-        self._n_cell = 3*mesh_density*2
-        yPlus = 0.025
+        self._n_cell = 3 * mesh_density * 2
+
+        # NEW: allow length-based generation
+        if pipe_length is not None:
+            # compute number of periods based on physical length
+            n_periods = pipe_length / self._l
+        else:
+            # fallback to old behavior
+            n_periods = 800
+
+        self._n_periods = n_periods
+
+        # turbulence-related mesh grading
+        yPlus = 0.002
         Re = U * D * rho / mu
         Cf = 0.079 * Re ** (-0.25)
         tau_w = 0.5 * Cf * rho * U ** 2
         U_tau = (tau_w / rho) ** 0.5
         delta_y = yPlus * mu / (rho * U_tau)
-        grading = (((D/2-D/2*0.6) * 2 / mesh_density - delta_y) / delta_y)*10
+        grading = (((D/2 - D/2*0.6) * 2 / mesh_density - delta_y) / delta_y)
         self._grading = grading
-        self._n_periods = n_periods
+
+#___________________OLD CODE BELOW___________________
+# class pyPipe(object):
+#     def __init__(self,*args):
+
+#         PI1 = 1.0 #pitch distance p/D (-)
+#         PI2 = 0.0 #corrugation height h/D (-)
+#         n_periods = 2000 #number of repeating sections (-)
+#         mesh_density = 10 #charactersistic mesh density 
+#         D = 2*250e-6 #diameter (m)
+#         rho = 1000.0 #density (kg/m^3)
+#         mu = 1e-6 #dynamic viscosity (kg/(m*s))
+#         U = 3.84e-5 #bulk velocity (m/s)
+
+#         self._r = D/2
+#         self._l = D*PI1
+#         self._h = D*PI2
+#         self._mesh_density = mesh_density
+#         self._n_cell = 3*mesh_density*2
+#         yPlus = 0.025
+#         Re = U * D * rho / mu
+#         Cf = 0.079 * Re ** (-0.25)
+#         tau_w = 0.5 * Cf * rho * U ** 2
+#         U_tau = (tau_w / rho) ** 0.5
+#         delta_y = yPlus * mu / (rho * U_tau)
+#         grading = (((D/2-D/2*0.6) * 2 / mesh_density - delta_y) / delta_y)*10
+#         self._grading = grading
+#         self._n_periods = n_periods
+#_________________________________________________________
 
     def _create_one_level_data(self, pos):
         reduc = 0.85
