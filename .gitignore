@@ -64,6 +64,8 @@
  
 # Ignore corrugatedTube Python script files
 **/corrugatedTube/__pycache__/*
+__pycache__/*
+**.pyc
 **/corrugatedTube/blockMeshDict
 blockMeshDict
 

@@ -6,6 +6,22 @@ import time
 import os
 import re
 
+#Python optimizer
+#        ↓
+#generate geometry
+#        ↓
+#blockMesh
+#        ↓
+#solver (simpleFoam)
+#        ↓
+#OpenFOAM functionObject writes result
+#        ↓
+#Python reads single number
+#        ↓
+#compute objective
+#        ↓
+#optimizer continues
+
 
 # ============================================================
 # CONFIGURATION
@@ -14,7 +30,7 @@ import re
 # Choose: "mock" or "cfd"
 EXEC_MODE = "mock"   # <-- SWITCH HERE
 
-PLOT_SURFACES = False  # Set to True to create surface plots
+PLOT_SURFACES = True  # Set to True to create surface plots
 RESULT_DIR = "optimization_results"
 os.makedirs(RESULT_DIR, exist_ok=True)
 
@@ -72,7 +88,7 @@ def mock_run(A, P, M, iteration):
     value = (A - 0.4)**2 + 0.1 * math.sin(P) + 0.05 * M
 
     # print nice status line
-    print(f"blockMesh successful, value = {value:.6f}")
+    #print(f"blockMesh successful, value = {value:.6f}")
 
     return value
 
