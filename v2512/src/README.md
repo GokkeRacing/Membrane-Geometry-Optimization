@@ -1,0 +1,1 @@
+Exectute "wmake libso" here to build aniScalarTransport and externalSpecieDiffusionResistance into a library "libDAC".
