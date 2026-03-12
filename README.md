@@ -1,1 +1,1 @@
-# Hej2
+Before running the moddel you should go into the src folder and exectute "wmake libso" here to build aniScalarTransport and externalSpecieDiffusionResistance into a library "libDAC". This is important for the model to run properly
