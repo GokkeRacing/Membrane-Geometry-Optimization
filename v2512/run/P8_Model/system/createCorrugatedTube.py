@@ -3,30 +3,33 @@ from OpenFoamDataWriter import OpenFoamDataWriter
 import os
 
 class pyPipe(object):
-    def __init__(self,*args):
-
-        P = 1.0 #pitch distance p/D (-)
-        A = 0.1 #corrugation height h/D (-)
-        n_periods = 50 #number of repeating sections (-)
-        mesh_density = 20 #charactersistic mesh density 
-        D = 2*250e-6 #diameter (m)
-        rho = 1000.0 #density (kg/m^3)
-        mu = 1e-6 #dynamic viscosity (kg/(m*s))
-        U = 3.84e-5 #bulk velocity (m/s)
+    def __init__(self, pipe_length=0.05): #here you can specify the physical length of the pipe in meters, or leave it as None to use the default number of periods
+        P = 1.0  # pitch distance p/D (-)
+        A = 0  # corrugation height h/D (-)
+        mesh_density = 12
+        D = 2 * 250e-6
+        rho = 1000.0
+        mu = 1e-6
+        U = 3.84e-5
 
         self._r = D/2
         self._l = D*P
         self._h = D*A
         self._mesh_density = mesh_density
-        self._n_cell = int(round(mesh_density * 0.6 * n_periods))
-        yPlus = 0.001
-        Re = U * D * rho / mu
-        Cf = 0.079 * Re ** (-0.25)
-        tau_w = 0.5 * Cf * rho * U ** 2
-        U_tau = (tau_w / rho) ** 0.5
-        delta_y = yPlus * mu / (rho * U_tau)
-        grading = (((D/2 - D/2*0.6) * 2 / mesh_density - delta_y) / delta_y)
-        self._grading = grading
+        n_periods = pipe_length / self._l
+        self._n_periods = n_periods
+        self._n_cell = int(round(0.6 *n_periods * mesh_density))
+        
+
+        # turbulence-related mesh grading
+        # yPlus = 0.002
+        # Re = U * D * rho / mu
+        # Cf = 0.079 * Re ** (-0.25)
+        # tau_w = 0.5 * Cf * rho * U ** 2
+        # U_tau = (tau_w / rho) ** 0.5
+        # delta_y = yPlus * mu / (rho * U_tau)
+        # grading = (((D/2 - D/2*0.6) * 2 / mesh_density - delta_y) / delta_y)
+        self._grading = 100
 
 #___________________OLD CODE BELOW___________________
 # class pyPipe(object):
@@ -58,7 +61,7 @@ class pyPipe(object):
 #_________________________________________________________
 
     def _create_one_level_data(self, pos):
-        reduc = 0.8
+        reduc = 0.75
         return [
             (pos[0] + np.cos(0) * self._r, pos[1] + np.sin(0) * self._r, pos[2] + 0),
             (pos[0] + np.cos(1.0 / 2.0 * np.pi) * self._r, pos[1] + np.sin(1.0 / 2.0 * np.pi) * self._r,
@@ -88,7 +91,7 @@ class pyPipe(object):
         return points_array
 
     def _create_one_level_edge_data(self, pos, layer):
-        reduc = 0.75
+        reduc = 0.7
         return [
             "arc %i %i (%e %e %e) " % (
                 (layer * 8) + 0, (layer * 8) + 1, pos[0] + np.cos((1.0 / 4.0) * np.pi) * self._r,
@@ -133,7 +136,7 @@ class pyPipe(object):
     def _create_one_level_block_data(self, layer):
         d = self._mesh_density
         d2 = d
-        z_level_1 = 4
+        z_level_1 = 1
 
         return [
             "hex (%i %i %i %i %i %i %i %i) pipe (%i %i %i) " % (
