@@ -1,6 +1,0 @@
-/* dynamicCode:
- * SHA1 = 7e32589dc775e0ef54ea474293006e3b01eaaa6c
- */
-functionObjectTemplate.C
-
-LIB = $(PWD)/../platforms/$(WM_OPTIONS)/lib/libwriteData_7e32589dc775e0ef54ea474293006e3b01eaaa6c

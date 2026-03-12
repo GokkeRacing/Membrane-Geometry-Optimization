@@ -32,9 +32,15 @@ runTimeModifiable   yes;
 
 libs
 (
-    "libexternalSpecieDiffusionResistance.so"
+    "libDAC.so"
 );
 
+<<<<<<< HEAD
+=======
+/*"libexternalSpecieDiffusionResistance.so"*/
+/*"libDAC.so"*/
+
+>>>>>>> d375c93b6fa2bb2b9a63b278ee42161060c661af
 functions
 {
     #include "FO_createScalarFields"

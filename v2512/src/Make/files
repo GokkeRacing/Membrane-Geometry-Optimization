@@ -1,0 +1,4 @@
+aniScalarTransport/aniScalarTransport.C
+externalSpecieDiffusionResistance/externalSpecieDiffusionResistanceFvPatchScalarField.C
+
+LIB = $(FOAM_USER_LIBBIN)/libDAC

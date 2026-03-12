@@ -25,7 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::functionObjects::scalarTransport
+    Foam::functionObjects::aniScalarTransport
 
 Group
     grpSolversFunctionObjects
@@ -54,10 +54,10 @@ Description
 Usage
     Minimal example in \c system/controlDict.functions:
     \verbatim
-    scalarTransport1
+    aniScalarTransport1
     {
         // Mandatory entries
-        type            scalarTransport;
+        type            aniScalarTransport;
         libs            (solverFunctionObjects);
 
         // Optional entries
@@ -84,7 +84,7 @@ Usage
     where:
     \table
       Property  | Description                         | Type | Reqd | Deflt
-      type      | Type name: scalarTransport          | word | yes  | -
+      type      | Type name: aniScalarTransport       | word | yes  | -
       libs      | Library name: solverFunctionObjects | word | yes  | -
       field     | Name of the passive-scalar field    | word | no   | s
       phi       | Name of flux field                  | word | no   | phi
@@ -110,10 +110,10 @@ Usage
     An example of function object specification to solve a residence time
     in a two-phase flow:
     \verbatim
-    scalarTransport1
+    aniScalarTransport1
     {
         // Mandatory entries
-        type            scalarTransport;
+        type            aniScalarTransport;
         libs            (solverFunctionObjects);
 
         // Optional entries
@@ -161,7 +161,7 @@ Note
     \f]
 
 SourceFiles
-    scalarTransport.C
+    aniScalarTransport.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -180,7 +180,7 @@ namespace functionObjects
 {
 
 /*---------------------------------------------------------------------------*\
-                       Class scalarTransport Declaration
+                       Class aniScalarTransport Declaration
 \*---------------------------------------------------------------------------*/
 
 class aniScalarTransport

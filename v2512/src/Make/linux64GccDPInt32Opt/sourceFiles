@@ -1,0 +1,5 @@
+SOURCE = \
+aniScalarTransport/aniScalarTransport.C \
+externalSpecieDiffusionResistance/externalSpecieDiffusionResistanceFvPatchScalarField.C \
+
+# sources
