@@ -1,3 +1,0 @@
-externalSpecieDiffusionResistanceFvPatchScalarField.C
-
-LIB = $(FOAM_USER_LIBBIN)/libexternalSpecieDiffusionResistance
