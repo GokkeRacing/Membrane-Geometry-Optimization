@@ -18,7 +18,7 @@ class pyPipe(object):
         self._mesh_density = mesh_density
         n_periods = pipe_length / self._l
         self._n_periods = n_periods
-        self._n_cell = int(round(0.6 *n_periods * mesh_density))
+        self._n_cell = int(round(0.6 * n_periods * mesh_density))
         
 
         # turbulence-related mesh grading
