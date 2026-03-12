@@ -5,7 +5,6 @@
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
-
 FoamFile
 {
     version     2.0;
@@ -13,26 +12,27 @@ FoamFile
     class       dictionary;
     object      fvSolution;
 }
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 solvers
 {
     p
 {
-    solver          PCG;
+    solver          PCG; //PCG
     preconditioner  DIC;
     tolerance       1e-6;
     relTol          1e-3;
+    maxIter         50;
 }
 
 pFinal
 {
     solver          PCG;
     preconditioner  DIC;
-    tolerance       1e-6;
+    tolerance       1e-3;
     relTol          0;
 }
+
 
     U
     {
@@ -52,13 +52,6 @@ pFinal
         relTol          1e-8;
     }
 
-    "(C_S|C_CO2)Final"
-    {
-        solver          PBiCGStab;
-        preconditioner  DILU;
-        tolerance       1e-12;
-        relTol          1e-8;
-    }
 }
 
 
@@ -68,14 +61,17 @@ pFinal
 
 SIMPLE
 {
-    nNonOrthogonalCorrectors 0;
+    nNonOrthogonalCorrectors 1;
+    nCorrectors         2;
+    consistent          yes;
+    momentumPredictor   yes;
 
     residualControl
     {
-        p               1e-6;
+        p               0.01; //1e-6
         U               1e-6;
-        C_S             1e-14;
-        C_CO2           1e-14;
+        C_S             1e-12;
+        C_CO2           1e-12;
     }
 }
 
@@ -87,22 +83,14 @@ relaxationFactors
 {
     fields
     {
-        p               0.3;
+        p               0.5;
     }
 
     equations
     {
-        U               0.7;
-        C_S             0.7;
-        C_CO2           0.7;
+        U               0.9;
+        C_S             0.9;
+        C_CO2           0.9;
     }
 }
 
-// --------------------------------------------------------------------------
-
-cache
-{
-    grad(U);
-}
-
-// ************************************************************************* //

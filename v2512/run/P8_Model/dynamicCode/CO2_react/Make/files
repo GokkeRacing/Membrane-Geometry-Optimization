@@ -1,6 +1,0 @@
-/* dynamicCode:
- * SHA1 = f97256849387510f768a2995290cec971a395ec7
- */
-codedFvOptionTemplate.C
-
-LIB = $(PWD)/../platforms/$(WM_OPTIONS)/lib/libCO2_react_f97256849387510f768a2995290cec971a395ec7

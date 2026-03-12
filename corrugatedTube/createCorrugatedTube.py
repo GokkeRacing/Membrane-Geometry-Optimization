@@ -8,7 +8,7 @@ class pyPipe(object):
 
         PI1 = 1.0 #pitch distance p/D (-)
         PI2 = 0.0 #corrugation height h/D (-)
-        n_periods = 800 #number of repeating sections (-)
+        n_periods = 6000 #number of repeating sections (-)
         mesh_density = 12 #charactersistic mesh density 
         D = 2*250e-6 #diameter (m)
         rho = 1000.0 #density (kg/m^3)
@@ -20,7 +20,7 @@ class pyPipe(object):
         self._h = D*PI2
         self._mesh_density = mesh_density
         self._n_cell = 3*mesh_density*2
-        yPlus = 0.002
+        yPlus = 0.0025
         Re = U * D * rho / mu
         Cf = 0.079 * Re ** (-0.25)
         tau_w = 0.5 * Cf * rho * U ** 2
@@ -106,7 +106,7 @@ class pyPipe(object):
     def _create_one_level_block_data(self, layer):
         d = self._mesh_density
         d2 = d
-        z_level_1 = 2
+        z_level_1 = 10
 
         return [
             "hex (%i %i %i %i %i %i %i %i) pipe (%i %i %i) " % (
