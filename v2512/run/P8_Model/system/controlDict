@@ -32,9 +32,10 @@ runTimeModifiable   yes;
 
 libs
 (
-    "libexternalSpecieDiffusionResistance.so"
+    "libDAC.so"
 );
 
+/*"libexternalSpecieDiffusionResistance.so"*/
 /*"libDAC.so"*/
 
 functions

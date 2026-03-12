@@ -5,7 +5,7 @@ import os
 class pyPipe(object):
     def __init__(self, pipe_length=1): #here you can specify the physical length of the pipe in meters, or leave it as None to use the default number of periods
         PI1 = 1.0  # pitch distance p/D (-)
-        PI2 = 0.1  # corrugation height h/D (-)
+        PI2 = 0  # corrugation height h/D (-)
         mesh_density = 12
         D = 2 * 250e-6
         rho = 1000.0
