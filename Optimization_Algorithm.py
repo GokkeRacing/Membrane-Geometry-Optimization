@@ -106,12 +106,39 @@ def write_params(params):
 
 
 def run_openfoam():
-    subprocess.run(["bash", "Allrun"], check=True)
+
+    import subprocess
+
+    try:
+        # 1) Run geometry generator inside the system folder
+        subprocess.run(
+            ["python3", "createCorrugatedTube.py"],
+            cwd="system",
+            check=True
+        )
+
+        # 2) Run the OpenFOAM case
+        subprocess.run(
+            ["bash", "Allrunparallel"],
+            check=True
+        )
+
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"OpenFOAM pipeline failed: {e}")
 
 
 def read_cfd_result():
-    data = np.loadtxt("postProcessing/sample/0/C_vs_z.xy")
-    return data[:, 1][-1]   # final concentration
+
+    file = "postProcessing/areaAverage/0/surfaceFieldValue.dat"
+
+    data = np.loadtxt(file, comments="#")
+
+    if data.size == 0:
+        raise RuntimeError("No data found in result file")
+
+    value = data[-1, 1]
+
+    return float(value)
 
 
 # ============================================================
