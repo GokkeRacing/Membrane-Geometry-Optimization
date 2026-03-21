@@ -1,0 +1,58 @@
+
+import numpy as np
+import matplotlib.pyplot as plt
+import glob
+import subprocess
+import os
+
+# ------------------------------------------------------------
+# 1. Run foamLog to generate the residual files
+# ------------------------------------------------------------
+# Choose your solver log file
+LOGFILE = "log.mpirun"    # change if needed
+
+if not os.path.isfile(LOGFILE):
+    raise FileNotFoundError(f"Cannot find solver log file: {LOGFILE}")
+
+print("Running foamLog ...")
+subprocess.run(["foamLog", LOGFILE], check=True)
+print("foamLog finished.\n")
+
+
+# ------------------------------------------------------------
+# 2. Utility to load residual files
+# ------------------------------------------------------------
+def load_residual(filename):
+    files = glob.glob(f"logs/{filename}*")
+    if not files:
+        raise FileNotFoundError(f"No file found starting with logs/{filename}")
+    fname = files[0]
+    print("Loading:", fname)
+    return np.loadtxt(fname)
+
+
+# ------------------------------------------------------------
+# 3. Load the four main residuals
+# ------------------------------------------------------------
+res_CO2 = load_residual("C_CO2FinalRes_0")
+res_S   = load_residual("C_SFinalRes_0")
+res_p   = load_residual("pFinalRes_1")
+res_Ux  = load_residual("UzFinalRes_0")
+
+# ------------------------------------------------------------
+# 4. Plotting
+# ------------------------------------------------------------
+plt.figure(figsize=(10, 6))
+
+plt.semilogy(res_CO2[:,0], res_CO2[:,1], label="C_CO2")
+plt.semilogy(res_S[:,0],   res_S[:,1],   label="C_S")
+plt.semilogy(res_p[:,0],   res_p[:,1],   label="p")
+plt.semilogy(res_Ux[:,0],  res_Ux[:,1],  label="Uz")
+
+plt.xlabel("Iteration")
+plt.ylabel("Residual")
+plt.title("Residual Convergence History")
+plt.legend()
+plt.grid(True, which="both", ls="--")
+plt.tight_layout()
+plt.show()

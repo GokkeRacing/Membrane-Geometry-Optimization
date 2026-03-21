@@ -6,17 +6,10 @@ import os
 class pyPipe(object):
     def __init__(self,*args):
 
-<<<<<<< HEAD
-        PI1 = 1.0 #pitch distance p/D (-)
-        PI2 = 0.0 #corrugation height h/D (-)
-        n_periods = 6000 #number of repeating sections (-)
-        mesh_density = 12 #charactersistic mesh density 
-=======
         P = 1.0 #pitch distance p/D (-)
         A = 0.1 #corrugation height h/D (-)
         n_periods = 5 #number of repeating sections (-)
         mesh_density = 18 #charactersistic mesh density 
->>>>>>> 02792a2486a6245d01f9667a01138851c143ea16
         D = 2*250e-6 #diameter (m)
         rho = 1000.0 #density (kg/m^3)
         mu = 1e-6 #dynamic viscosity (kg/(m*s))
@@ -26,12 +19,8 @@ class pyPipe(object):
         self._l = D*P
         self._h = D*A
         self._mesh_density = mesh_density
-        self._n_cell = 3*mesh_density*2
-<<<<<<< HEAD
-        yPlus = 0.0025
-=======
+        self._n_cell = 3*2*mesh_density
         yPlus = 0.001
->>>>>>> 02792a2486a6245d01f9667a01138851c143ea16
         Re = U * D * rho / mu
         Cf = 0.079 * Re ** (-0.25)
         tau_w = 0.5 * Cf * rho * U ** 2

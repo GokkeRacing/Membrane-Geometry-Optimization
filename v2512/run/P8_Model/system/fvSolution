@@ -20,31 +20,30 @@ solvers
 {
     solver          PCG; //PCG
     preconditioner  DIC;
-    tolerance       1e-6;
-    relTol          1e-3;
-    maxIter         50;
+    tolerance       1e-8;
+    relTol          1e-4;
+    maxIter         20;
 }
-
-pFinal
-{
-    solver          PCG;
-    preconditioner  DIC;
-    tolerance       1e-3;
-    relTol          0;
-}
-
 
     U
     {
         solver          PBiCGStab;
         preconditioner  DILU;
-        tolerance       1e-9;
-        relTol          1e-4;
+        tolerance       1e-12;
+        relTol          1e-8;
         maxIter         1000;
     }
 
     
-    "(C_S|C_CO2)"
+    C_S
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-12;
+        relTol          1e-8;
+    }
+
+    C_CO2
     {
         solver          PBiCGStab;
         preconditioner  DILU;
@@ -65,14 +64,15 @@ SIMPLE
     nCorrectors         2;
     consistent          yes;
     momentumPredictor   yes;
-
+/*
     residualControl
     {
-        p               0.01; //1e-6
-        U               1e-6;
+        p               1e-8; //1e-6
+        U               1e-8;
         C_S             1e-12;
         C_CO2           1e-12;
     }
+*/
 }
 
 // --------------------------------------------------------------------------
@@ -88,9 +88,9 @@ relaxationFactors
 
     equations
     {
-        U               0.9;
-        C_S             0.9;
-        C_CO2           0.9;
+        U               0.8;
+        C_S             0.8;
+        C_CO2           0.8;
     }
 }
 

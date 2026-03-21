@@ -1,7 +1,7 @@
 CO2
 {
     type            aniScalarTransport;
-    libs            (solverFunctionObjects);
+    //libs            (solverFunctionObjects);
     writeControl    writeTime;
     field           C_CO2;
     nut             D_CO2;
@@ -54,7 +54,7 @@ CO2
 S
 {
     type            aniScalarTransport;
-    libs            (solverFunctionObjects);
+    //libs            (solverFunctionObjects);
     writeControl    writeTime;
     field           C_S;
     nut             D_S;

@@ -11,6 +11,7 @@ runApplication mpirun -np 6 simpleFoam -parallel
 #runParallel $(getApplication)
 #runApplication$(getApplication)
 runApplication reconstructPar
+#rm -rf processor*
 
 
 #------------------------------------------------------------------------------

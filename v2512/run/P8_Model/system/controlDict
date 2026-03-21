@@ -18,7 +18,7 @@ application         simpleFoam;
 startFrom           latestTime;
 startTime           0;
 stopAt              endTime;
-endTime             100000;
+endTime             10000;
 deltaT              1;
 writeControl        timeStep;
 writeInterval       100;
@@ -33,19 +33,22 @@ runTimeModifiable   yes;
 libs
 (
     "libDAC.so"
+    "libutilityFunctionObjects.so"
 );
 
-<<<<<<< HEAD
-=======
-/*"libexternalSpecieDiffusionResistance.so"*/
-/*"libDAC.so"*/
-
->>>>>>> d375c93b6fa2bb2b9a63b278ee42161060c661af
 functions
 {
     #include "FO_createScalarFields"
     #include "FO_scalarTransport"
     #include "FO_writeData"
-}
 
+    residuals
+        {
+            type    residuals;
+            // no 'libs' needed here because we loaded it globally already
+            fields  (p U C_CO2 C_S);
+            writeFields no;   // set 'yes' if you also want residual fields written
+            log     yes;      // print to solver log
+        }
+}
 // ************************************************************************* //
