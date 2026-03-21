@@ -6,17 +6,41 @@ import time
 import os
 import re
 
+#Python optimizer
+#        ↓
+#generate geometry
+#        ↓
+#blockMesh
+#        ↓
+#solver (simpleFoam)
+#        ↓
+#OpenFOAM functionObject writes result
+#        ↓
+#Python reads single number
+#        ↓
+#compute objective
+#        ↓
+#optimizer continues
+
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
 
 # Choose: "mock" or "cfd"
-EXEC_MODE = "mock"   # <-- SWITCH HERE
+EXEC_MODE = "cfd"   # <-- SWITCH HERE
 
-PLOT_SURFACES = False  # Set to True to create surface plots
-RESULT_DIR = "optimization_results"
+CASE_DIR = os.path.dirname(os.path.abspath(__file__)) # Absolute path of this script
+ALLRUN_PATH = os.path.join(CASE_DIR, "Allrun")
+ALLCLEAN_PATH = os.path.join(CASE_DIR, "Allclean")
+system_dir = os.path.join(CASE_DIR, "system")
+
+PLOT_SURFACES = True  # Set to True to create surface plots
+
+# Results directory (absolute path)
+RESULT_DIR = os.path.join(CASE_DIR, "optimization_results")
 os.makedirs(RESULT_DIR, exist_ok=True)
+
 
 history_params = []
 history_obj = []
@@ -72,7 +96,7 @@ def mock_run(A, P, M, iteration):
     value = (A - 0.4)**2 + 0.1 * math.sin(P) + 0.05 * M
 
     # print nice status line
-    print(f"blockMesh successful, value = {value:.6f}")
+    #print(f"blockMesh successful, value = {value:.6f}")
 
     return value
 
@@ -81,48 +105,116 @@ def mock_run(A, P, M, iteration):
 # ============================================================
 
 def write_params(params):
+    import subprocess
+    
     A, P, M = params
-    with open("inputParameters.txt", "w") as f:
-        f.write(f"A {A}\nP {P}\nM {M}\n")
+    M = int(M)  # ensure integer
+    
+    with open(os.path.join(CASE_DIR, "inputParameters.txt"), "w") as f:
+        f.write(f"A {A:.4f}\nP {P:.4f}\nM {M}\n")
 
-    # Your geometry generator:
-    subprocess.run(["python3", "yourBlockMeshScript.py"], check=True)
+
+
+    # Run geometry generator → produces blockMeshDict
+    subprocess.run(
+        ["python3", "createCorrugatedTube.py", f"{A:.4f}", f"{P:.4f}", str(M)],
+        cwd=system_dir,
+        check=True
+    )
 
 
 def run_openfoam():
-    subprocess.run(["bash", "Allrun"], check=True)
+
+    import subprocess, os
+
+    # Clean previous case data
+    proc1 = subprocess.run(
+            ["bash", ALLCLEAN_PATH],
+            cwd=CASE_DIR
+        )
+
+    # Run the OpenFOAM case
+    proc2 = subprocess.run(
+        ["bash", ALLRUN_PATH],
+        cwd=CASE_DIR
+    )
+    #except subprocess.CalledProcessError as e:
+        #raise RuntimeError(f"OpenFOAM pipeline failed: {e}")
+
+    return proc2.returncode
 
 
 def read_cfd_result():
-    data = np.loadtxt("postProcessing/sample/0/C_vs_z.xy")
-    return data[:, 1][-1]   # final concentration
+    fpath = os.path.join(
+        CASE_DIR, 
+        "postProcessing/concentration/0/surfaceFieldValue.dat"
+    )
+    print("🔍 Reading CFD result file:", fpath)
+
+    if not os.path.isfile(fpath):
+        raise RuntimeError(f"CFD result file missing: {fpath}")
+
+    data = np.loadtxt(fpath, comments="#")
+    return float(data[-1,1])
 
 
 # ============================================================
 # OBJECTIVE FUNCTION
 # ============================================================
+PENALTY = 1e9  # big penalty so DE avoids bad area
 
 def objective(params):
     global iteration
     iteration += 1
     start = time.time()
 
-    A = float(params[0])
-    P = float(params[1])
-    M = int(round(params[2]))   # enforce integer
+    # Raw values from DE
+    A_raw = float(params[0])
+    P_raw = float(params[1])
+    M_raw = float(params[2])
+
+    # Force 4-decimal accuracy
+    A = float(f"{A_raw:.4f}")
+    P = float(f"{P_raw:.4f}")
+    M = int(round(M_raw))  # integer-weighted variable
 
     params_int = np.array([A, P, M], float)
 
-    # ----------------------------------------
-    # MOCK OR CFD EXECUTION
-    # ----------------------------------------
-    if EXEC_MODE == "mock":
-        value = mock_run(A, P, M, iteration)
-        print(f"blockMesh successful, value = {value:.6f}")
-    else:
-        write_params(params_int)
-        run_openfoam()
-        value = read_cfd_result()
+    
+    try:
+        # -------------------------------
+        # MOCK OR CFD EXECUTION
+        # -------------------------------
+        if EXEC_MODE == "mock":
+            value = mock_run(A, P, M, iteration)
+            print(f"[mock] value = {value:.12f}")
+        else:
+            # Generate geometry + run CFD
+            write_params(params_int)  # must call your generator with A,P,M
+            ret = run_openfoam() # Test
+            
+            if ret != 0:
+                print(f"⚠ Warning: Allrun returned code {ret}, attempting to read results anyway...")
+
+            try:
+                value = read_cfd_result()
+            except Exception as e:
+                print(f"⚠ Read failed → assigning penalty: {e}")
+                value = PENALTY
+
+
+            #run_openfoam()            # may raise on blockMesh/checkMesh/solver failure
+            #value = read_cfd_result() # may raise if file missing or shape unexpected
+
+    except Exception as e:
+        # Assign penalty and continue optimization
+        value = PENALTY
+        print(
+            f"⚠️  CFD failed on iter {iteration} "
+            f"(A={A:.4f}, P={P:.4f}, M={M}). "
+            f"Penalty={PENALTY:.3e}. Details: {e}"
+        )
+
 
     # ----------------------------------------
     # Log
@@ -131,9 +223,43 @@ def objective(params):
     history_obj.append(value)
     history_time.append(time.time() - start)
 
-    print(f"[{iteration:04d}] Params tested: {params_int} → Objective: {value:.6f}")
+    print(f"[{iteration:04d}] Params tested: {params_int} → Objective: {value:.12f}")
 
     return value
+
+import matplotlib.tri as mtri
+
+def _plot_2d_tricontour(A_plot, P_plot, O_plot, Mfix, out_dir,
+                        levels=30, cmap="viridis", title_prefix="Objective"):
+    """
+    Create a 2D triangulation-based filled contour plot from scattered (A,P)->Objective samples.
+    Saves to objective_2d_tricontour_M{M}.png in out_dir.
+    """
+    # Triangulate scattered points
+    tri = mtri.Triangulation(A_plot, P_plot)
+
+    fig, ax = plt.subplots(figsize=(6.5, 5.0))
+    # Filled contours of objective
+    cntr = ax.tricontourf(tri, O_plot, levels=levels, cmap=cmap)
+    # Optional black line contours for readability
+    ax.tricontour(tri, O_plot, levels=max(6, levels // 4), colors="k", linewidths=0.5, alpha=0.5)
+
+    # Show the actual samples (white dots with thin black edge)
+    ax.scatter(A_plot, P_plot, c="white", s=10, edgecolors="k", linewidths=0.3, alpha=0.9, label="samples")
+    ax.legend(loc="best", frameon=True, fontsize=8)
+
+    ax.set_xlabel("A")
+    ax.set_ylabel("P")
+    ax.set_title(f"{title_prefix} (M = {int(Mfix)})")
+
+    cbar = fig.colorbar(cntr, ax=ax, shrink=0.9)
+    cbar.set_label("Objective")
+
+    fn = os.path.join(out_dir, f"objective_2d_tricontour_M{int(Mfix)}.png")
+    plt.tight_layout()
+    plt.savefig(fn, dpi=180)
+    plt.show()
+    print(f"Saved 2D contour: {fn}")
 
 
 # ============================================================
@@ -142,16 +268,16 @@ def objective(params):
 
 bounds = [
     (0, 1),     # A
-    (0, 20),    # P
+    (0, 3),    # P
     (1, 1),     # M (rounded)
 ]
 
 result = differential_evolution(
     objective,
     bounds,
-    maxiter=20,
-    popsize=6,
-    tol=0.01,
+    maxiter=3, # number of generations (iterations)
+    popsize=3, # number of candidates per generation = popsize * len(params)
+    tol=1e-8, # relative tolerance for convergence
     workers=1 #-1 means use all available CPU cores, otherwise specify number of parallel workers
 )
 
@@ -165,7 +291,7 @@ M_opt = int(round(M_opt_raw))
 
 print("\n============================")
 print(f"🎯 Optimal parameters (raw):          {result.x}")
-print(f"🎯 Optimal parameters (rounded M):    [{A_opt:.6f}, {P_opt:.6f}, {M_opt}]")
+print(f"🎯 Optimal parameters (rounded M):    [{A_opt:.4f}, {P_opt:.4f}, {M_opt}]")
 print(f"🎯 Optimal objective:                 {result.fun}")
 print(f"📈 Total evaluations:                 {iteration}")
 print("============================")
@@ -272,5 +398,29 @@ if PLOT_SURFACES:
         plt.show()
 
     print("Surface plots created for M =", [int(m) for m in unique_M])
+
+    # ===== Extra 2D contour plot (keeps your 3D scatter untouched) =====
+    # If you have duplicate (A,P), average objectives to prevent artefacts
+    AP = np.round(np.column_stack([A_plot, P_plot]), 6)
+    uniq, idx, inv = np.unique(AP, axis=0, return_index=True, return_inverse=True)
+
+    O_agg = np.zeros(len(uniq), dtype=float)
+    cnt = np.zeros(len(uniq), dtype=int)
+    for i, k in enumerate(inv):
+        O_agg[k] += O_plot[i]
+        cnt[k] += 1
+    O_agg /= np.maximum(cnt, 1)
+
+    # Make the 2D triangulated contour (no SciPy required)
+    _plot_2d_tricontour(
+        A_plot=uniq[:, 0],
+        P_plot=uniq[:, 1],
+        O_plot=O_agg,
+        Mfix=Mfix,
+        out_dir=RESULT_DIR,
+        levels=30,
+        cmap="viridis",
+        title_prefix="Objective"
+    )
 else:
     print("Surface plotting skipped.")

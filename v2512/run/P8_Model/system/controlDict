@@ -41,6 +41,11 @@ functions
     #include "FO_createScalarFields"
     #include "FO_scalarTransport"
     #include "FO_writeData"
+<<<<<<< HEAD
+=======
+    #include "FO_concentrationAvg"
+}
+>>>>>>> 3eb5c6b0fa022f1a647dd36409ea4ab76085090f
 
     residuals
         {

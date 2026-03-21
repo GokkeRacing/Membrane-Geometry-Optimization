@@ -31,7 +31,6 @@
 **/constant/polyMesh/boundary*
 **/constant/polyMesh/sets
 **/constant/polyMesh/*
-**/Fig2_3D_Validation/*
  
 # Zones and levels
 **/*Level*
@@ -41,6 +40,9 @@
 **/constant/polyMesh/refinementHistory*
 **/constant/polyMesh/surfaceIndex*
 **/constant/triSurface
+
+# Dynamic code
+**/dynamicCode/*
  
 # function object and post-processing data
 **/forces
@@ -62,8 +64,14 @@
  
 # End of https://www.toptal.com/developers/gitignore/api/openfoam
  
+# Personal testing folders
+**/Fig2_3D_Validation/*
+**/Optimization_test_folder/*
+
 # Ignore corrugatedTube Python script files
 **/corrugatedTube/__pycache__/*
+__pycache__/*
+**.pyc
 **/corrugatedTube/blockMeshDict
 blockMeshDict
 
