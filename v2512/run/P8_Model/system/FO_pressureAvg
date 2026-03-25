@@ -1,0 +1,18 @@
+FO_pressureAvg
+    {
+        type    surfaceFieldValue;
+        libs    ("libfieldFunctionObjects.so");
+
+        log     true;
+
+        regionType      patch;
+        name            inlet;
+
+        operation       areaAverage;
+        fields          ( p );
+
+        writeFields     false;
+
+        writeControl    timeStep;
+        writeInterval   1;
+    }
