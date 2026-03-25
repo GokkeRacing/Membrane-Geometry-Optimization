@@ -68,6 +68,8 @@
 **/Fig2_3D_Validation/*
 **/Optimization_test_folder/*
 
+**/P8_Model*
+
 # Ignore corrugatedTube Python script files
 **/corrugatedTube/__pycache__/*
 __pycache__/*

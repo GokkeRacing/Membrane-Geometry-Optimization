@@ -7,7 +7,7 @@ restore0Dir
 touch case.foam
 runApplication blockMesh
 runApplication decomposePar
-runApplication mpirun -np 6 simpleFoam -parallel
+runApplication mpirun -np 8 simpleFoam -parallel
 #runParallel $(getApplication)
 #runApplication$(getApplication)
 runApplication reconstructPar
