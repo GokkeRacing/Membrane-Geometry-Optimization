@@ -6,7 +6,7 @@ class pyPipe(object):
     def __init__(self, pipe_length=0.05): #here you can specify the physical length of the pipe in meters, or leave it as None to use the default number of periods
         P = 1.0  # pitch distance p/D (-)
         A = 0  # corrugation height h/D (-)
-        mesh_density = 8
+        mesh_density = 5.28
         D = 2 * 250e-6
         rho = 1000.0
         mu = 1e-6
@@ -22,7 +22,7 @@ class pyPipe(object):
         
 
         #turbulence-related mesh grading
-        yPlus = 0.003
+        yPlus = 0.0045
         Re = U * D * rho / mu
         Cf = 0.079 * Re ** (-0.25)
         tau_w = 0.5 * Cf * rho * U ** 2
