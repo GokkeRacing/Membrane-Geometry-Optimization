@@ -3,15 +3,15 @@ cd ${0%/*} || exit 1    # Run from this directory
 
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
 
-restore0Dir
-touch case.foam
-runApplication blockMesh
+#restore0Dir
+#touch case.foam
+#runApplication blockMesh
 runApplication decomposePar
 runApplication mpirun -np 8 simpleFoam -parallel
 #runParallel $(getApplication)
 #runApplication$(getApplication)
 runApplication reconstructPar
-#rm -rf processor*
+rm -rf processor*
 
 
 #------------------------------------------------------------------------------

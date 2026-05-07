@@ -68,8 +68,6 @@
 **/Fig2_3D_Validation/*
 **/Optimization_test_folder/*
 
-**/P8_Model*
-
 # Ignore corrugatedTube Python script files
 **/corrugatedTube/__pycache__/*
 __pycache__/*
@@ -95,7 +93,11 @@ blockMeshDict
  
 # Ignore all optimization result files
 /optimization_results/**/*
+**/optimization_results/**
  
 **/linux64*
 **/lnInclude
- 
+
+# Ignore all files in the .venv directory
+/.venv/*
+**/.venv/*

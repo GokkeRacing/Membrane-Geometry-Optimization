@@ -1,0 +1,16 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # Run from this directory
+
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+restore0Dir
+touch case.foam
+runApplication blockMesh
+#checkMesh -allGeometry -allTopology > log.checkMesh 2>&1
+#checkMesh -allTopology > log.checkMesh 2>&1
+checkMesh > log.checkMesh 2>&1
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+#------------------------------------------------------------------------------
