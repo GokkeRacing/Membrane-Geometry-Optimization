@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 import time
 import os
 import re
+import shutil
+from multiprocessing.pool import ThreadPool
+import uuid
 
 #Python optimizer
 #        ↓
@@ -38,6 +41,7 @@ SEARCH_FIELD_MODE = "a_p_relation"
 #   "square_region"
 #   "a_p_relation"
 
+NUMBER_OF_CORES = 4 # for parallel execution in multi-objective mode (NSGA-II)
 
 # Data from base case (straight fibre) for normalization/reference
 L = 0.02   # axial length [m]
@@ -190,22 +194,22 @@ def write_params(params):
     )
 
 
-def run_openfoam():
+def run_openfoam(run_dir):
     import subprocess, os, re
 
     # --- CLEAN CASE ---
-    subprocess.run(["bash", ALLCLEAN_PATH], cwd=CASE_DIR)
+    subprocess.run(["bash", ALLCLEAN_PATH], cwd=run_dir)
 
     # =====================================================
     # 1) RUN MESHING
     # =====================================================
     proc_mesh = subprocess.run(
         ["bash", ALLMESH_PATH],
-        cwd=CASE_DIR
+        cwd=run_dir
     )
 
     # --- CHECK log.checkMesh ---
-    checkmesh_log = os.path.join(CASE_DIR, "log.checkMesh")
+    checkmesh_log = os.path.join(run_dir, "log.checkMesh")
 
     mesh_failed = False
 
@@ -234,14 +238,14 @@ def run_openfoam():
     # =====================================================
     proc_solver = subprocess.run(
         ["bash", ALLRUN_PATH], #ALLRUN_PATH or ALLRUNPARALLEL_PATH
-        cwd=CASE_DIR
+        cwd=run_dir
     )
     return_code = proc_solver.returncode
 
     # =====================================================
     # 3) PARSE iteration count from log.simpleFoam
     # =====================================================
-    log_path = os.path.join(CASE_DIR, "log.simpleFoam")
+    log_path = os.path.join(run_dir, "log.simpleFoam")
     iterations = None
 
     if os.path.isfile(log_path):
@@ -260,9 +264,9 @@ def run_openfoam():
 
 
 
-def read_cfd_result():
+def read_cfd_result(run_dir):
     fpath = os.path.join(
-        CASE_DIR,
+        run_dir,
         "postProcessing/concentration/0/surfaceFieldValue.dat"
     )
     print("🔍 Reading CFD result file:", fpath)
@@ -279,9 +283,9 @@ def read_cfd_result():
     return float(data[-1, 1])
 
 
-def read_pressure_avg():
+def read_pressure_avg(run_dir):
     fpath = os.path.join(
-        CASE_DIR,
+        run_dir,
         "postProcessing/FO_pressureAvg/0/surfaceFieldValue.dat"
     )
     print("📄 Reading pressureAvg file:", fpath)
@@ -296,9 +300,9 @@ def read_pressure_avg():
 
     return float(data[-1, 1])
 
-def read_surface_area():
+def read_surface_area(run_dir):
     fpath = os.path.join(
-        CASE_DIR,
+        run_dir,
         "postProcessing/FO_surfaceArea/0/surfaceFieldValue.dat"
     )
     print("🧮 Reading membrane surface area:", fpath)
@@ -312,6 +316,18 @@ def read_surface_area():
                 return float(line.split(":")[1].strip())
 
     raise RuntimeError("Surface area not found in FO_surfaceArea output")
+
+
+def make_run_dir():
+    run_dir = os.path.join(CASE_DIR, f"run_{uuid.uuid4().hex}")
+    shutil.copytree(
+        CASE_DIR,
+        run_dir,
+        ignore=shutil.ignore_patterns(
+            "run_*", ".venv", "optimization_results", "__pycache__"
+        )
+    )
+    return run_dir
 
 
 # ============================================================
@@ -364,9 +380,12 @@ def objective(params):
         # -------------------------------------------------
         # Generate geometry + run CFD
         # -------------------------------------------------
-        write_params(params_int)
+        
+        run_dir = make_run_dir()
 
-        return_code, iterations = run_openfoam()
+        write_params(params_int)
+        return_code, iterations = run_openfoam(run_dir)
+
 
         # -------------------------------------------------
         # Handle mesh failure (solver never ran)
@@ -395,19 +414,19 @@ def objective(params):
         # -------------------------------------------------
         else:
             try:
-                concentration = read_cfd_result()
+                concentration = read_cfd_result(run_dir)
             except Exception as e:
                 print(f"⚠ Concentration read failed → {e}")
                 concentration = None
 
             try:
-                pressure_avg = read_pressure_avg()
+                pressure_avg = read_pressure_avg(run_dir)
             except Exception as e:
                 print(f"⚠ PressureAvg read failed → {e}")
                 pressure_avg = None
 
             try:
-                surface_area = read_surface_area()
+                surface_area = read_surface_area(run_dir)
             except Exception as e:
                 print(f"⚠ Surface area read failed → {e}")
                 surface_area = None
@@ -594,12 +613,13 @@ try:
             xu=np.array([A_max, p_hat_max, M_max]),
 
         class CFDProblem(ElementwiseProblem):
-            def __init__(self):
+            def __init__(self, elementwise_runner=None):
                 super().__init__(
                 n_var=3,
                 n_obj=2,
                 xl=xl,
                 xu=xu,
+                elementwise_runner=elementwise_runner
             )
 
             
@@ -632,13 +652,25 @@ try:
             eliminate_duplicates=True # True / False
         )
 
-        result = minimize(
-            CFDProblem(),
-            algorithm,
-            #n_gen=1,           # generations
-            termination = termination,
-            verbose=True
-        )
+        
+        #problem = CFDProblem()
+
+        # ---------------------------------------------
+        # PARALLEL EXECUTION (simple, safe)
+        # ---------------------------------------------
+
+        with ThreadPool(processes=NUMBER_OF_CORES) as pool:
+            problem = CFDProblem(
+                elementwise_runner=lambda f, X: pool.map(f, X)
+            )
+
+            result = minimize(
+                problem,
+                algorithm,
+                termination=termination,
+                verbose=True
+            )
+
     else:
         raise ValueError("Unknown OPTIMIZATION_MODE")
 
