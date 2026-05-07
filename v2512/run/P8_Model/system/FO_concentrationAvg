@@ -1,4 +1,4 @@
-    concentration
+concentration
     {
         type    surfaceFieldValue;
         libs    ("libfieldFunctionObjects.so");
@@ -8,11 +8,13 @@
         regionType      patch;
         name            outlet;
 
-        operation       areaAverage;
+        //operation       areaAverage;
+        operation       weightedAverage;
+        weightField     phi;
         fields          ( C_S );
 
         writeFields     false;
 
         writeControl    timeStep;
-        writeInterval   1;
+        writeInterval   5000;
     }

@@ -1,0 +1,20 @@
+FO_surfaceArea
+{
+    type            surfaceFieldValue;
+    libs            ("libfieldFunctionObjects.so");
+
+    writeControl    writeTime;
+    writeInterval   1;
+
+    log             true;
+    writeFields     no;
+
+    surfaceFormat   raw;
+
+    fields          ();       
+
+    regionType      patch;
+    name            surface;
+
+    operation       areaIntegrate;
+}

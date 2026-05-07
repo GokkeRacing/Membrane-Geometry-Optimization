@@ -43,6 +43,7 @@ functions
     #include "FO_writeData"
     #include "FO_concentrationAvg"
     #include "FO_pressureAvg"
+    #include "FO_surfaceArea"
 }
 
     residuals

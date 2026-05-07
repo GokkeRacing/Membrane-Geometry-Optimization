@@ -14,5 +14,5 @@ FO_pressureAvg
         writeFields     false;
 
         writeControl    timeStep;
-        writeInterval   1;
+        writeInterval   5000;
     }

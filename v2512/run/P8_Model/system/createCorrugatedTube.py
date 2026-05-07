@@ -1,25 +1,28 @@
 import numpy as np
 from OpenFoamDataWriter import OpenFoamDataWriter
 import os
+import sys
 
 class pyPipe(object):
-    def __init__(self, pipe_length=0.02): #here you can specify the physical length of the pipe in meters, or leave it as None to use the default number of periods
-        P = 2.0  # pitch distance p/D (-)
-        A = 0.1  # corrugation height h/D (-)
-        mesh_density = 5
+    def __init__(self, A, P, M, pipe_length=0.02): #here you can specify the physical length of the pipe in meters, or leave it as None to use the default number of periods
+        self._P = P  # pitch distance p/D (-)
+        self._A = A  # corrugation height h/D (-)
+        self._M = M
+        mesh_density = 8
         D = 2 * 250e-6
         rho = 1000.0
         mu = 1e-6
         U = 3.84e-5
 
         self._r = D/2
-        self._l = D*P
-        self._h = D*A
+        self._l = D*self._P
+        self._h = D*self._A
         self._mesh_density = mesh_density
         n_periods = pipe_length / self._l
         self._n_periods = n_periods
-        self._n_cell = int(round(1 * n_periods * mesh_density))
+        self._n_cell = int(round(3 * n_periods * mesh_density))
         
+
 
         #turbulence-related mesh grading
         yPlus = 0.0045
@@ -268,5 +271,13 @@ class pyPipe(object):
 
 
 if __name__ == '__main__':
-    pipe = pyPipe()    
+    
+    if len(sys.argv) != 4:
+        print("Usage: python3 createCorrugatedTube.py A P M", file=sys.stderr)
+        sys.exit(2)
+
+    A = float(sys.argv[1])
+    P = float(sys.argv[2])
+    M = M = int(round(float(sys.argv[3])))
+    pipe = pyPipe(A, P, M)    
     pipe.write_block_mesh_dict()
