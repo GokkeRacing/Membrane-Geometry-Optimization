@@ -22,7 +22,7 @@ solvers
     preconditioner  DIC;
     tolerance       1e-8;
     relTol          1e-6;
-    maxIter         20;
+    maxIter         50;
 }
 
     U
@@ -60,7 +60,7 @@ solvers
 
 SIMPLE
 {
-    nNonOrthogonalCorrectors 1;
+    nNonOrthogonalCorrectors 3;
     nCorrectors         2;
     consistent          yes;
     momentumPredictor   yes;
@@ -88,9 +88,9 @@ relaxationFactors
 
     equations
     {
-        U               0.9;
-        C_S             0.9;
-        C_CO2           0.9;
+        U               0.8;
+        C_S             0.8;
+        C_CO2           0.8;
     }
 }
 

@@ -3,6 +3,7 @@ from OpenFoamDataWriter import OpenFoamDataWriter
 import os
 import sys
 
+
 class pyPipe(object):
     def __init__(self, A, P, M, pipe_length=0.02): #here you can specify the physical length of the pipe in meters, or leave it as None to use the default number of periods
         self._P = P  # pitch distance p/D (-)
