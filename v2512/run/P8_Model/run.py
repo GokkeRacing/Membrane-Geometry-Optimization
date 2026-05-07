@@ -4,6 +4,24 @@ import sys
 
 VENV_DIR = ".venv"
 
+
+def ensure_venv_available():
+    try:
+        import venv
+    except ImportError:
+        py_ver = f"{sys.version_info.major}.{sys.version_info.minor}"
+        print(
+            "ERROR: Python 'venv' module is not available.\n\n"
+            "On Debian/Ubuntu, install it with:\n"
+            f"  sudo apt install python{py_ver}-venv\n"
+        )
+        sys.exit(1)
+
+# ------------------------------------------------------------
+# Ensure venv module exists
+# ------------------------------------------------------------
+ensure_venv_available()
+
 # ------------------------------------------------------------
 # Create virtual environment if missing
 # ------------------------------------------------------------

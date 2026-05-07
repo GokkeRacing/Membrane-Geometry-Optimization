@@ -23,7 +23,7 @@ import re
 #optimizer continues
 
 
-OPTIMIZATION_MODE = "single"
+OPTIMIZATION_MODE = "multi"
 # Options:
 #   "single"
 #   "multi"
@@ -45,7 +45,8 @@ L = 0.02   # axial length [m]
 #DC_DZ_REF = (0.987610075258 - 1) / L  # (C_out - C_in) / L, with C_in = 1.0 # area-weighted average base case
 DC_DZ_REF = (0.986744661804 - 1) / L # velocity-weighted average base case
 #DS_DZ_REF = 2 * 250e-6 * np.pi # (surface area per unit length for straight tube with diameter 250µm)
-DS_DZ_REF = 3.128689353606000094e-5 / L # updated reference from actual base case surface area measurement
+S_REF = 3.128689353606000094e-5 # surface area from straight tube case
+DS_DZ_REF = S_REF / L # updated reference from actual base case surface area measurement
 
 # Area average values
 
@@ -159,9 +160,11 @@ def compute_objective(concentration_out, surface_area):
             f = (DC_DZ_REF / dC_dz) * (dS_dz / DS_DZ_REF)
             return f
     elif OPTIMIZATION_MODE == "multi":
-        dC_dz = -abs((concentration_out - 1.0) / L) # / abs(DC_DZ_REF)
-        dS_dz = surface_area / L # / DS_DZ_REF
-        return [dC_dz, dS_dz]
+        dC_dz = (concentration_out - 1.0) / L # / abs(DC_DZ_REF)
+        #dS_dz = surface_area / L # / DS_DZ_REF
+        S = surface_area / S_REF # normalized surface area (S/S_ref)
+        #return [dC_dz, dS_dz]
+        return [dC_dz, S]
 
     else:
         raise ValueError(f"Unknown OBJECTIVE_MODE: {OBJECTIVE_MODE}")
@@ -551,11 +554,11 @@ try:
         result = differential_evolution( #https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html
             objective, # the function to minimize
             bounds, # list of (min, max) pairs for each parameter
-            maxiter=3, # number of generations (iterations)
+            maxiter=1, # number of generations (iterations)
             popsize=3, # number of candidates per generation = popsize * len(params)
             init=init, # initial population - custom set in the top
             tol=1e-8, # relative tolerance for convergence
-            workers=1 #-1 means use all available CPU cores, otherwise specify number of parallel workers
+            workers=4 #-1 means use all available CPU cores, otherwise specify number of parallel workers
         )
         # Single-objective outputs
         A_opt, P_opt, M_opt_raw = result.x
@@ -615,9 +618,11 @@ try:
                     M = int(round(x[2]))   # ✅ no rounding anymore
                     P = 6*A + 6*(A_max - A)*p_hat
 
-                dC_dz, dS_dz = objective(np.array([A, P, M]))
+                #dC_dz, dS_dz = objective(np.array([A, P, M]))
+                dC_dz, S = objective(np.array([A, P, M]))
 
-                out["F"] = [dC_dz, dS_dz]
+                #out["F"] = [dC_dz, dS_dz]
+                out["F"] = [dC_dz, S]
 
         # --------------------------------------------------------
         # Configure and run NSGA-II
