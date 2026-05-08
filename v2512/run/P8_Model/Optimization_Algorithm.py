@@ -8,6 +8,7 @@ import re
 import shutil
 from multiprocessing.pool import ThreadPool
 import uuid
+from threading import Lock
 
 #Python optimizer
 #        ↓
@@ -25,8 +26,7 @@ import uuid
 #        ↓
 #optimizer continues
 
-
-OPTIMIZATION_MODE = "single"
+OPTIMIZATION_MODE = "multi"
 # Options:
 #   "single"
 #   "multi"
@@ -52,8 +52,8 @@ DC_DZ_REF = (9.870944188596e-01 - 1) / L # velocity-weighted average base case
 S_REF = 3.136548544771e-05 # surface area from straight tube case
 DS_DZ_REF = S_REF / L # updated reference from actual base case surface area measurement
 
-# Area average values
-
+eval_counter = 0
+eval_lock = Lock()
 
 # ============================================================
 # CONFIGURATION
@@ -71,6 +71,25 @@ PLOT_SURFACES = True  # Set to True to create surface plots
 # Results directory (absolute path)
 RESULT_DIR = os.path.join(CASE_DIR, "optimization_results")
 os.makedirs(RESULT_DIR, exist_ok=True)
+
+# log files for history (absolute paths)
+PARAM_LOG = os.path.join(RESULT_DIR, "history_params.csv")
+OBJ_LOG   = os.path.join(RESULT_DIR, "history_objectives.csv")
+
+# --- CLEAN LOGS FOR A NEW RUN ---
+for f in (PARAM_LOG, OBJ_LOG):
+    if os.path.exists(f):
+        os.remove(f)
+
+# Write headers if files don't exist
+if not os.path.exists(PARAM_LOG):
+    with open(PARAM_LOG, "w") as f:
+        f.write("iteration,A,P,M\n")
+
+if not os.path.exists(OBJ_LOG):
+    with open(OBJ_LOG, "w") as f:
+        f.write("iteration,dC_dz,S\n")
+
 
 # History storage for diagnostics and plotting
 history_params = []
@@ -336,9 +355,16 @@ def make_run_dir():
 PENALTY = 5e2  # Potentially change to a value based on failure type
 
 def objective(params):
-    global iteration
-    iteration += 1
+    global iteration, eval_counter
+
     start = time.time()
+
+    with eval_lock:
+        eval_counter += 1
+        eval_id = eval_counter    
+
+    iteration = eval_id           # keep existing prints working
+
 
     # Initize diagnostics
     iterations = None
@@ -446,7 +472,7 @@ def objective(params):
         else:
             value = [PENALTY, PENALTY]
         print(
-            f"⚠️ CFD failed on iter {iteration} "
+            f"⚠️ CFD failed on iter {eval_id} "
             f"(A={A:.4f}, P={P:.4f}, M={M}). "
             f"Penalty={PENALTY:.3e}. Details: {e}"
         )
@@ -487,10 +513,36 @@ def objective(params):
     history_surface_area.append(surface_area)
 
     if OPTIMIZATION_MODE == "single":
-        print(f"[{iteration:04d}] Params tested: {params_int} → Objective: {value:.12e}")
+        print(f"[{eval_id:04d}] Params tested: {params_int} → Objective: {value:.12e}")
     else:
-        print(f"[{iteration:04d}] Params tested: {params_int} → Objectives: {value}")
+        print(f"[{eval_id:04d}] Params tested: {params_int} → Objectives: {value}")
 
+    # =========================================================
+    # PERSIST RESULTS TO DISK (CRASH-SAFE, SINGLE & MULTI)
+    # =========================================================
+
+    # Write parameters (physical space: A, P, M)
+    with open(PARAM_LOG, "a") as f:
+        f.write(
+            f"{eval_id},"
+            f"{params_int[0]:.10e},"
+            f"{params_int[1]:.10e},"
+            f"{int(params_int[2])}\n"
+        )
+
+    # Write objectives
+    with open(OBJ_LOG, "a") as f:
+        if OPTIMIZATION_MODE == "single":
+            # single-objective → one value
+            f.write(f"{eval_id},{value:.10e}\n")
+        else:
+            # multi-objective → two values
+            dC_dz, S = value
+            f.write(
+                f"{eval_id},"
+                f"{dC_dz:.10e},"
+                f"{S:.10e}\n"
+            )
     return value
 
 import matplotlib.tri as mtri
@@ -608,7 +660,7 @@ try:
 
         
 
-        termination = get_termination("n_gen", 1) # generations
+        termination = get_termination("n_gen", 10) # generations
         #termination = get_termination("n_eval", 3) # total evaluations
         
         # --------------------------------------------------------
@@ -695,14 +747,14 @@ except KeyboardInterrupt:
 # ============================================================
 # PRINT RESULTS
 # ============================================================
-if OPTIMIZATION_MODE == "single":
+if OPTIMIZATION_MODE == "single" and result is not None:
     print("\n============================")
     print(f"🎯 Optimal parameters (raw):          {result.x}")
     print(f"🎯 Optimal parameters (rounded M):    [{A_opt:.4f}, {P_opt:.4f}, {M_opt}]")
     print(f"🎯 Optimal objective:                 {result.fun}")
-    print(f"📈 Total evaluations:                 {iteration}")
+    print(f"📈 Total evaluations:                 {eval_id}")
     print("============================")
-elif OPTIMIZATION_MODE == "multi":
+elif OPTIMIZATION_MODE == "multi" and result is not None:
     print("\n============================")
     print("🎯 Pareto-optimal solutions (A, P, M):")
     for i in range(len(result.X)):
@@ -716,7 +768,7 @@ elif OPTIMIZATION_MODE == "multi":
             P_i = 6.0*A_i + 6.0*(A_max - A_i)*p_hat_i
 
         print(f"  - [{A_i:.4f}, {P_i:.4f}, {M_i}] → Objectives: {result.F[i]}")
-    print(f"📈 Total evaluations:                 {iteration}")
+    print(f"📈 Total evaluations:                 {eval_id}")
     print("============================")
 
 
@@ -724,12 +776,12 @@ elif OPTIMIZATION_MODE == "multi":
 # SAVE RESULTS
 # ============================================================
 # Save optimal parameters and objective values
-if OPTIMIZATION_MODE == "single":
+if OPTIMIZATION_MODE == "single" and result is not None:
     np.savetxt(f"{RESULT_DIR}/optimal_params_raw.txt", result.x)
     np.savetxt(f"{RESULT_DIR}/optimal_params_integerM.txt",
             np.array([A_opt, P_opt, M_opt]))
     np.savetxt(f"{RESULT_DIR}/optimal_objective.txt", [result.fun])
-elif OPTIMIZATION_MODE == "multi":
+elif OPTIMIZATION_MODE == "multi" and result is not None:
     np.savetxt(f"{RESULT_DIR}/pareto_params.txt", result.X)
     np.savetxt(f"{RESULT_DIR}/pareto_objectives.txt", result.F)
 
@@ -745,7 +797,7 @@ elif OPTIMIZATION_MODE == "multi":
     np.savetxt(f"{RESULT_DIR}/pareto_full_objectives.txt", F_pareto_full)
 
 # shared history logs (both modes)
-np.savetxt(f"{RESULT_DIR}/num_iterations.txt", [iteration])
+np.savetxt(f"{RESULT_DIR}/num_iterations.txt", [eval_id])
 np.savetxt(f"{RESULT_DIR}/history_params.txt", np.array(history_params))
 np.savetxt(f"{RESULT_DIR}/history_objective.txt", np.array(history_obj))
 np.savetxt(f"{RESULT_DIR}/history_time.txt", np.array(history_time))
@@ -759,7 +811,7 @@ np.savetxt(f"{RESULT_DIR}/history_surface_area.txt", np.array(history_surface_ar
 # ============================================================
 # CONVERGENCE PLOT
 # ============================================================
-if OPTIMIZATION_MODE == "single":
+if OPTIMIZATION_MODE == "single" and result is not None:
     plt.figure()
     plt.plot(history_obj, marker='o', ms=3, lw=1)
     plt.xlabel("Evaluation #")
@@ -769,7 +821,7 @@ if OPTIMIZATION_MODE == "single":
     plt.tight_layout()
     plt.savefig(f"{RESULT_DIR}/convergence_plot.svg")
     plt.show()
-elif OPTIMIZATION_MODE == "multi":
+elif OPTIMIZATION_MODE == "multi" and result is not None:
     plt.figure()
 
     # All evaluations
@@ -819,7 +871,7 @@ elif OPTIMIZATION_MODE == "multi":
 
 from mpl_toolkits.mplot3d import Axes3D 
 
-if PLOT_SURFACES and OPTIMIZATION_MODE == "single":
+if PLOT_SURFACES and OPTIMIZATION_MODE == "single" and result is not None:
     params_arr = np.array(history_params)
     objs_arr = np.array(history_obj)
 
