@@ -65,14 +65,6 @@ SIMPLE
     consistent          yes;
     momentumPredictor   yes;
 
-    residualControl
-    {
-        p               1e-8; //1e-6
-        U               1e-10;
-        C_S             1e-14;
-        C_CO2           1e-14;
-    }
-
 }
 
 // --------------------------------------------------------------------------

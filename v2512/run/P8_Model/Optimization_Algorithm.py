@@ -26,7 +26,7 @@ import uuid
 #optimizer continues
 
 
-OPTIMIZATION_MODE = "multi"
+OPTIMIZATION_MODE = "single"
 # Options:
 #   "single"
 #   "multi"
@@ -41,15 +41,15 @@ SEARCH_FIELD_MODE = "a_p_relation"
 #   "square_region"
 #   "a_p_relation"
 
-NUMBER_OF_CORES = 4 # for parallel execution in multi-objective mode (NSGA-II)
+NUMBER_OF_CORES = 12 # for parallel execution in multi-objective mode (NSGA-II)
 
 # Data from base case (straight fibre) for normalization/reference
 L = 0.02   # axial length [m]
 # Weighted average values 
 #DC_DZ_REF = (0.987610075258 - 1) / L  # (C_out - C_in) / L, with C_in = 1.0 # area-weighted average base case
-DC_DZ_REF = (0.986744661804 - 1) / L # velocity-weighted average base case
+DC_DZ_REF = (9.870944188596e-01 - 1) / L # velocity-weighted average base case
 #DS_DZ_REF = 2 * 250e-6 * np.pi # (surface area per unit length for straight tube with diameter 250µm)
-S_REF = 3.128689353606000094e-5 # surface area from straight tube case
+S_REF = 3.136548544771e-05 # surface area from straight tube case
 DS_DZ_REF = S_REF / L # updated reference from actual base case surface area measurement
 
 # Area average values
@@ -117,7 +117,7 @@ if SEARCH_FIELD_MODE == "square_region":
         
 elif SEARCH_FIELD_MODE == "a_p_relation":
     # --- Independent optimization variables ---
-    A_min, A_max = 0.0, 2.0          # physical A
+    A_min, A_max = 0.0, 3.0          # physical A
     p_hat_min, p_hat_max = 1e-12, 1.0  # normalized P-scaler
     M_min, M_max = 1, 1
 
@@ -175,13 +175,13 @@ def compute_objective(concentration_out, surface_area):
 
 
 
-def write_params(params):
+def write_params(params, run_dir):
     import subprocess
     
     A, P, M = params
     M = int(M)  # ensure integer
     
-    with open(os.path.join(CASE_DIR, "inputParameters.txt"), "w") as f:
+    with open(os.path.join(run_dir, "inputParameters.txt"), "w") as f:
         f.write(f"A {A:.4f}\nP {P:.4f}\nM {M}\n")
 
 
@@ -189,7 +189,7 @@ def write_params(params):
     # Run geometry generator → produces blockMeshDict
     subprocess.run(
         ["python3", "createCorrugatedTube.py", f"{A:.4f}", f"{P:.4f}", str(M)],
-        cwd=system_dir,
+        cwd=os.path.join(run_dir, "system"),
         check=True
     )
 
@@ -383,7 +383,7 @@ def objective(params):
         
         run_dir = make_run_dir()
 
-        write_params(params_int)
+        write_params(params_int, run_dir)
         return_code, iterations = run_openfoam(run_dir)
 
 
@@ -450,6 +450,14 @@ def objective(params):
             f"(A={A:.4f}, P={P:.4f}, M={M}). "
             f"Penalty={PENALTY:.3e}. Details: {e}"
         )
+    
+    finally:
+        # CLEAN UP
+        try:
+            shutil.rmtree(run_dir)
+        except Exception as cleanup_err:
+            print(f"⚠️ Failed to clean {run_dir}: {cleanup_err}")
+
 
     # ----------------------------------------
     # Log
@@ -577,7 +585,7 @@ try:
             popsize=3, # number of candidates per generation = popsize * len(params)
             init=init, # initial population - custom set in the top
             tol=1e-8, # relative tolerance for convergence
-            workers=4 #-1 means use all available CPU cores, otherwise specify number of parallel workers
+            workers=1 #-1 means use all available CPU cores, otherwise specify number of parallel workers
         )
         # Single-objective outputs
         A_opt, P_opt, M_opt_raw = result.x
@@ -596,9 +604,11 @@ try:
         from pymoo.termination import get_termination
         from pymoo.core.variable import Real, Integer
         #from pymoo.core.mixed import MixedVariableGA
+        from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
+
         
 
-        termination = get_termination("n_gen", 30) # generations
+        termination = get_termination("n_gen", 1) # generations
         #termination = get_termination("n_eval", 3) # total evaluations
         
         # --------------------------------------------------------
@@ -606,11 +616,11 @@ try:
         # --------------------------------------------------------
 
         if SEARCH_FIELD_MODE == "square_region":
-            xl=np.array([A_min, P_min, M_min]),
-            xu=np.array([A_max, P_max, M_max]),
+            xl=np.array([A_min, P_min, M_min])
+            xu=np.array([A_max, P_max, M_max])
         elif SEARCH_FIELD_MODE == "a_p_relation":
-            xl=np.array([A_min, p_hat_min, M_min]),
-            xu=np.array([A_max, p_hat_max, M_max]),
+            xl=np.array([A_min, p_hat_min, M_min])
+            xu=np.array([A_max, p_hat_max, M_max])
 
         class CFDProblem(ElementwiseProblem):
             def __init__(self, elementwise_runner=None):
@@ -632,14 +642,17 @@ try:
                     A = float(f"{x[0]:.4f}")
                     P = float(f"{x[1]:.4f}")
                     M = int(round(x[2]))   # ✅ no rounding anymore
+
+                    #dC_dz, dS_dz = objective(np.array([A, P, M]))
+                    dC_dz, S = objective(np.array([A, P, M]))
                 elif SEARCH_FIELD_MODE == "a_p_relation":
                     A = float(f"{x[0]:.4f}")
                     p_hat = float(f"{x[1]:.4f}")
                     M = int(round(x[2]))   # ✅ no rounding anymore
-                    P = 6*A + 6*(A_max - A)*p_hat
+                    #P = 6*A + 6*(A_max - A)*p_hat
 
-                #dC_dz, dS_dz = objective(np.array([A, P, M]))
-                dC_dz, S = objective(np.array([A, P, M]))
+                    #dC_dz, dS_dz = objective(np.array([A, p_hat, M]))
+                    dC_dz, S = objective(np.array([A, p_hat, M]))
 
                 #out["F"] = [dC_dz, dS_dz]
                 out["F"] = [dC_dz, S]
@@ -700,7 +713,7 @@ elif OPTIMIZATION_MODE == "multi":
             P_i = result.X[i][1]
         elif SEARCH_FIELD_MODE == "a_p_relation":
             p_hat_i = result.X[i][1]
-            P_i = 6.0 * A_i / p_hat_i
+            P_i = 6.0*A_i + 6.0*(A_max - A_i)*p_hat_i
 
         print(f"  - [{A_i:.4f}, {P_i:.4f}, {M_i}] → Objectives: {result.F[i]}")
     print(f"📈 Total evaluations:                 {iteration}")
@@ -762,6 +775,18 @@ elif OPTIMIZATION_MODE == "multi":
     # All evaluations
     plt.scatter(F_all[:, 0], F_all[:, 1], s=10, alpha=0.2, label="All evaluations")
 
+    plt.scatter(
+    DC_DZ_REF,
+    S_REF / S_REF,
+    marker="*",
+    s=220,
+    c="red",
+    edgecolors="black",
+    linewidths=1.2,
+    label="Base case (A = 0)"
+    )
+
+
     # Full Pareto (true best)
     plt.scatter(
         F_pareto_full[:, 0],
@@ -780,7 +805,7 @@ elif OPTIMIZATION_MODE == "multi":
     )
 
     plt.xlabel("dC/dz")
-    plt.ylabel("dS/dz")
+    plt.ylabel("S_REF/S")
     plt.title("Pareto Front Comparison")
     plt.legend()
     plt.grid(True)

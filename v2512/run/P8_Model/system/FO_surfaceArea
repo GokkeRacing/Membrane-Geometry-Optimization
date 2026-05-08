@@ -18,3 +18,29 @@ FO_surfaceArea
 
     operation       areaIntegrate;
 }
+
+// area
+// {
+//     name writeData;
+//     type coded;
+//     libs (utilityFunctionObjects);
+//     writeControl writeTime;
+
+//     codeInclude
+//     #{
+//         #include "fvCFD.H"
+//         #include <fstream>
+//     #};
+
+//     codeExecute
+//     #{
+//         const fvMesh& msh = mesh();
+
+//         const label patchID = msh.boundaryMesh().findPatchID("surface");
+//         const fvPatch& patch = msh.boundary()[patchID];
+
+//         const scalarField& magSf = patch.magSf();
+//         const scalar area = gSum(magSf);
+//         Info << "Surface area: " << area << endl;
+//     }
+// }

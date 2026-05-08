@@ -101,3 +101,6 @@ blockMeshDict
 # Ignore all files in the .venv directory
 /.venv/*
 **/.venv/*
+
+# Ignore all files in any run_ directories
+**/run_*
