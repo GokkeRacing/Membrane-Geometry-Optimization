@@ -21,43 +21,26 @@ internalField   uniform (0 0 0);
 boundaryField
 {
     inlet
-    {
-        type    codedFixedValue;
-        value   $internalField;  // dummy, gets overwritten by code
-
-        name    parabolicInlet;
-
-        code
-        #{
-            const scalar Uavg = 3.84e-5;
-            const vectorField& faceCentres = patch().Cf(); 
-            static bool firstTime = true;
-            static scalar R = -GREAT;
-
-            vectorField& field = *this;
-
-            if (firstTime)
-            {  
-                const pointField& points = patch().patch().points();
-
-                forAll(points, i)
-                {
-                    R = max(R, points[i].x());
-                }
-                reduce(R, maxOp<scalar>());
-                firstTime = false;
-            }
-
-            forAll(field, i)
-            {
-                scalar x = faceCentres[i].x();
-                scalar y = faceCentres[i].y();
-                scalar r = sqrt(x*x + y*y);
-                scalar Uz = 2*Uavg * (1.0 - r*r/R/R);
-                field[i] = vector(0, 0, Uz);
-            }
-        #};
-    }
+{
+    type    codedFixedValue;
+    value   uniform (0 0 0);
+    name    parabolicInlet;
+    code
+    #{
+        const scalar Uavg = 3.84e-5;
+        const scalar R = 250e-6;   // fixed inlet radius [m]
+        const vectorField& faceCentres = patch().Cf();
+        vectorField& field = *this;
+        forAll(field, i)
+        {
+            scalar x = faceCentres[i].x();
+            scalar y = faceCentres[i].y();
+            scalar r = sqrt(x*x + y*y);
+            scalar Uz = 2.0*Uavg*(1.0 - (r*r)/(R*R));
+            field[i] = vector(0, 0, Uz);
+        }
+    #};
+}
     outlet
     {
         type            zeroGradient;

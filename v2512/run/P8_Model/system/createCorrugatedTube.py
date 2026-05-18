@@ -26,7 +26,7 @@ class pyPipe(object):
 
 
         #turbulence-related mesh grading
-        yPlus = 0.0045
+        yPlus = 0.0030
         Re = U * D * rho / mu
         Cf = 0.079 * Re ** (-0.25)
         tau_w = 0.5 * Cf * rho * U ** 2
@@ -89,8 +89,10 @@ class pyPipe(object):
         t_vec = np.linspace(0, self._n_periods, self._n_cell)
 
         for i in range(len(t_vec)):
-            pos = [self._h * np.sin(2 * np.pi * t_vec[i]), self._h * np.cos(2 * np.pi * t_vec[i]),
-                   self._l * t_vec[i]]
+            pos = [self._h * np.sin(2 * np.pi * t_vec[i]),
+            self._h * (np.cos(2 * np.pi * t_vec[i]) - 1.0),
+            self._l * t_vec[i]]
+
             points_array = points_array + self._create_one_level_data(pos)
         return points_array
 
@@ -130,9 +132,11 @@ class pyPipe(object):
 
         t_vec = np.linspace(0, self._n_periods, self._n_cell)
 
-        for i in range(len(t_vec)):
-            pos = [self._h * np.sin(2 * np.pi * t_vec[i]), self._h * np.cos(2 * np.pi * t_vec[i]),
-                   self._l * t_vec[i]]
+        for i in range(len(t_vec)):          
+            pos = [self._h * np.sin(2 * np.pi * t_vec[i]),
+            self._h * (np.cos(2 * np.pi * t_vec[i]) - 1.0),
+            self._l * t_vec[i]]
+
             edges_array = edges_array + self._create_one_level_edge_data(pos, layer)
             layer = layer + 1
         return edges_array
@@ -227,9 +231,11 @@ class pyPipe(object):
 
         t_vec = np.linspace(0, self._n_periods, self._n_cell)
 
-        for i in range(len(t_vec) - 1):
-            pos = [self._h * np.sin(2 * np.pi * t_vec[i]), self._h * np.cos(2 * np.pi * t_vec[i]),
-                   self._l * t_vec[i]]
+        for i in range(len(t_vec) - 1):     
+            pos = [self._h * np.sin(2 * np.pi * t_vec[i]),
+            self._h * (np.cos(2 * np.pi * t_vec[i]) - 1.0),
+            self._l * t_vec[i]]
+
             patches_array = patches_array + self._create_one_level_patches_data(layer)
             layer = layer + 1
         patches_array = patches_array + [");", "}"]

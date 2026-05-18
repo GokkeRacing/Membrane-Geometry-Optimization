@@ -26,7 +26,7 @@ from threading import Lock
 #        ↓
 #optimizer continues
 
-OPTIMIZATION_MODE = "multi"
+OPTIMIZATION_MODE = "single"
 # Options:
 #   "single"
 #   "multi"
@@ -41,7 +41,7 @@ SEARCH_FIELD_MODE = "a_p_relation"
 #   "square_region"
 #   "a_p_relation"
 
-NUMBER_OF_CORES = 12 # for parallel execution in multi-objective mode (NSGA-II)
+NUMBER_OF_CORES = 10 # for parallel execution in multi-objective mode (NSGA-II)
 
 # Data from base case (straight fibre) for normalization/reference
 L = 0.02   # axial length [m]
@@ -477,12 +477,12 @@ def objective(params):
             f"Penalty={PENALTY:.3e}. Details: {e}"
         )
     
-    finally:
+    #finally:
         # CLEAN UP
-        try:
-            shutil.rmtree(run_dir)
-        except Exception as cleanup_err:
-            print(f"⚠️ Failed to clean {run_dir}: {cleanup_err}")
+        #try:
+            #shutil.rmtree(run_dir)
+        #except Exception as cleanup_err:
+            #print(f"⚠️ Failed to clean {run_dir}: {cleanup_err}")
 
 
     # ----------------------------------------
@@ -660,7 +660,7 @@ try:
 
         
 
-        termination = get_termination("n_gen", 10) # generations
+        termination = get_termination("n_gen", 20) # generations
         #termination = get_termination("n_eval", 3) # total evaluations
         
         # --------------------------------------------------------
@@ -713,7 +713,7 @@ try:
         # Configure and run NSGA-II
         # --------------------------------------------------------
         algorithm = NSGA2(
-            pop_size=12,        # increase cautiously (CFD cost!)
+            pop_size=10,        # increase cautiously (CFD cost!)
             eliminate_duplicates=True # True / False
         )
 
@@ -768,7 +768,7 @@ elif OPTIMIZATION_MODE == "multi" and result is not None:
             P_i = 6.0*A_i + 6.0*(A_max - A_i)*p_hat_i
 
         print(f"  - [{A_i:.4f}, {P_i:.4f}, {M_i}] → Objectives: {result.F[i]}")
-    print(f"📈 Total evaluations:                 {eval_id}")
+    #print(f"📈 Total evaluations:                 {[eval_id]}")
     print("============================")
 
 
@@ -797,7 +797,7 @@ elif OPTIMIZATION_MODE == "multi" and result is not None:
     np.savetxt(f"{RESULT_DIR}/pareto_full_objectives.txt", F_pareto_full)
 
 # shared history logs (both modes)
-np.savetxt(f"{RESULT_DIR}/num_iterations.txt", [eval_id])
+#np.savetxt(f"{RESULT_DIR}/num_iterations.txt", ([eval_id]))
 np.savetxt(f"{RESULT_DIR}/history_params.txt", np.array(history_params))
 np.savetxt(f"{RESULT_DIR}/history_objective.txt", np.array(history_obj))
 np.savetxt(f"{RESULT_DIR}/history_time.txt", np.array(history_time))
